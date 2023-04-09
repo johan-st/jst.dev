@@ -1,6 +1,6 @@
 # **`jst.dev`**
 
-This is an attempt at consolidating a somewhat ambitious set of projects into a single domain.
+This is an attempt at consolidating a somewhat ambitious set of projects into a single domain. For now it is a place to jot down my thoughts, ideaa and dreams. I will update this document as I progress.
 
 My goal is to help myself focus on a synergistic set of projects and gain experience with devops and infrastructure.
 
@@ -10,21 +10,19 @@ documentation of services, portfolio, infrastructure administration, and other p
 
 | service                             | protocol | path             | description                    |              by               |                   online                   |
 | :---------------------------------- | -------: | :--------------- | :----------------------------- | :---------------------------: | :----------------------------------------: |
-| [Portfolio](#portfolio)             |   `http` | `jst.dev`        | portfolio website              |              me               |                    yes                     |
-| [Image Server](#image-server)       |   `http` | `img.jst.dev`    | image server                   |              me               |                     no                     |
-| [Meal Calculator](#meal-calculator) |   `http` | `meal.jst.dev`   | a meal calculator              |              me               | yes ([here](https://strandersson.se/meal)) |
-| [Status](#status)                   |   `http` | `status.jst.dev` | a dashboard for the server     |              me               |                     no                     |
-| [API](#api)                         |   `http` | `api.jst.dev`    | consolidated backend           |              me               |                     no                     |
-| [Wishlist](#wishlist)               |    `ssh` | `jst.dev`        | a catalog of ssh endpoints     | [charm.sh](https://charm.sh/) |                     no                     |
-| [Git Server](#git-server)           |    `ssh` | `git.jst.dev`    | git server                     | [charm.sh](https://charm.sh/) |                     no                     |
-| [Status (ssh)](#status-ssh)         |    `ssh` | `status.jst.dev` | ssh a dashboard for the server |              me               |                     no                     |
-| [gRPC](#gRPC)                       |   `grpc` | `jst.dev`        | a gRPC server                  |              me               |                     no                     |
+| [Portfolio](#portfolio)             |     http | `jst.dev`        | portfolio website              |              me               |                    yes                     |
+| [Image Server](#image-server)       |     http | `img.jst.dev`    | image server                   |              me               |                     no                     |
+| [Meal Calculator](#meal-calculator) |     http | `meal.jst.dev`   | a meal calculator              |              me               | yes ([here](https://strandersson.se/meal)) |
+| [Status](#status)                   |     http | `status.jst.dev` | a dashboard for the server     |              me               |                     no                     |
+| [API](#api)                         |     http | `api.jst.dev`    | consolidated backend           |              me               |                     no                     |
+| [Wishlist](#wishlist)               |      ssh | `jst.dev`        | a catalog of ssh endpoints     | [charm.sh](https://charm.sh/) |                     no                     |
+| [Git Server](#git-server)           |      ssh | `git.jst.dev`    | git server                     | [charm.sh](https://charm.sh/) |                     no                     |
+| [Status (ssh)](#status-ssh)         |      ssh | `status.jst.dev` | ssh a dashboard for the server |              me               |                     no                     |
+| [gRPC](#gRPC)                       |     grpc | `jst.dev`        | a gRPC server                  |              me               |                     no                     |
 
 ## Infrastructure
 
 - For now, I plan to run all services on a single server. I will likely use a small DigitalOcean droplet.
-- The go services are single executables and are run with systemd (or eqv.).
-- nginx could be used to handle the http requests. (reverse proxy)
 
 ### Alternatives
 
