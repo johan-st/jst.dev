@@ -18,7 +18,7 @@ documentation of services, portfolio, infrastructure administration, and other p
 | [Wishlist](#wishlist)               |      ssh | `jst.dev`        | a catalog of ssh endpoints     | [charm.sh](https://charm.sh/) |                     no                     |
 | [Git Server](#git-server)           |      ssh | `git.jst.dev`    | git server                     | [charm.sh](https://charm.sh/) |                     no                     |
 | [Status (ssh)](#status-ssh)         |      ssh | `status.jst.dev` | ssh a dashboard for the server |              me               |                     no                     |
-| [gRPC](#gRPC)                       |     grpc | `jst.dev`        | a gRPC server                  |              me               |                     no                     |
+| [gRPC](#gRPC)                       |     http | `grpc.jst.dev`   | a gRPC server                  |              me               |                     no                     |
 
 ## Infrastructure
 
@@ -41,7 +41,7 @@ A react site buildt to list and describe some of my projects
 
 _source code: [github](https://github.com/charmbracelet/wishlist)_
 
-a catalog of ssh endpoints
+A private catalog of ssh endpoints. Wishlist can be used to store and share ssh endpoints. It also gates access to the endpoints. Access is granted when the user is added to the config file. 
 
 # Git Server
 
