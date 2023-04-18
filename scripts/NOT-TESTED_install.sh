@@ -8,7 +8,7 @@ apt update
 
 # Install charm applications
 # - softserve (git server w/ TUI)
-# - wishlist (ssh gateway)
+# - wishlist (ssh entrypoint)
 # - gum (enables better interavtive shell-scripts)
 sudo apt install -y softserve wishlist gum
 
