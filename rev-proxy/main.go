@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -11,12 +13,18 @@ import (
 )
 
 func main() {
+	flagPort := flag.Int("port", 8000, "port to serve on")
+	flag.Parse()
+
 	server := &server{
 		router: way.NewRouter(),
 	}
 
 	server.routes()
-	log.Fatal(http.ListenAndServe(":8000", server.router))
+
+	listenAddr := fmt.Sprintf(":%d", *flagPort)
+	log.Printf("[Reverse Proxy]: Listening on %s...\n", listenAddr)
+	log.Fatal(http.ListenAndServe(listenAddr, server.router))
 }
 
 type server struct {
