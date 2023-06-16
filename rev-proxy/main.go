@@ -34,12 +34,24 @@ type server struct {
 // Register handlers for routes
 func (srv *server) routes() {
 	srv.router.Handle("GET", "git.jst.dev/", srv.gitHandler())
+	srv.router.Handle("GET", "/", srv.portfolioHandler())
 
+}
+
+func (srv *server) portfolioHandler() *httputil.ReverseProxy {
+	// setup
+	urlPortfolio, err := url.Parse("https://jst.dev")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// handler
+	return newProxy(urlPortfolio)
 }
 
 func (srv *server) gitHandler() *httputil.ReverseProxy {
 	// setup
-	urlPortfolio, err := url.Parse("https://jst.dev")
+	urlPortfolio, err := url.Parse("https://github.com/johan-st")
 	if err != nil {
 		log.Fatal(err)
 	}
