@@ -7,12 +7,19 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/matryer/way"
 )
 
 func main() {
+	// env vars
+	useTls := os.Getenv("TLS")
+	tlsCert := os.Getenv("TLS_CERT")
+	tlsKey := os.Getenv("TLS_KEY")
+
+	// flags
 	flagPort := flag.Int("port", 8000, "port to serve on")
 	flag.Parse()
 
@@ -24,7 +31,13 @@ func main() {
 
 	listenAddr := fmt.Sprintf(":%d", *flagPort)
 	log.Printf("[Reverse Proxy]: Listening on %s...\n", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, server.router))
+	if useTls == "true" {
+		log.Println("Using TLS")
+		log.Fatal(http.ListenAndServeTLS(listenAddr, tlsCert, tlsKey, server.router))
+	} else {
+		log.Println("Not using TLS")
+		log.Fatal(http.ListenAndServe(listenAddr, server.router))
+	}
 }
 
 type server struct {
@@ -34,7 +47,7 @@ type server struct {
 // Register handlers for routes
 func (srv *server) routes() {
 	srv.router.Handle("GET", "git.jst.dev/", srv.gitHandler())
-	srv.router.Handle("GET", "portfolio.jst.dev/", srv.portfolioHandler())
+	srv.router.Handle("GET", "me.jst.dev/", srv.portfolioHandler())
 
 }
 
