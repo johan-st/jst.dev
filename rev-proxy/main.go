@@ -15,17 +15,19 @@ const (
 	URLPortfolio = "https://jst.dev/"
 	URLImg       = "https://jst.dev:8080"
 
-	DefaultCert = "cert.pem"
-	DefaultKey  = "key.pem"
-	DefaultPort = "8080"
+	DefaultCert    = "cert.pem"
+	DefaultKey     = "key.pem"
+	DefaultPort    = "8080"
+	DefaultLogfile = "proxy.log"
 )
 
 func main() {
 	// env vars
-	useTls := os.Getenv("TLS_ENABLED")
 	tlsCert := os.Getenv("TLS_CERT")
 	tlsKey := os.Getenv("TLS_KEY")
-	port := os.Getenv("PORT")
+	useTls := os.Getenv("PROXY_TLS_ENABLED")
+	port := os.Getenv("PROXY_PORT")
+	pathLogfile := os.Getenv("PROXY_pathLOGFILE")
 
 	// default values
 	if tlsCert == "" {
@@ -37,14 +39,30 @@ func main() {
 	if port == "" {
 		port = DefaultPort
 	}
+	if pathLogfile == "" {
+		pathLogfile = DefaultLogfile
+	}
+
+	// logging
+	logfile, err := os.OpenFile(DefaultLogfile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logfile.Close()
+	log.SetOutput(logfile)
 
 	// routes
 	mux := http.NewServeMux()
-	mux.Handle("git.jst.dev/", gitHandler())
-	mux.Handle("/git", gitHandler())
-	mux.Handle("me.jst.dev/", portfolioHandler())
-	mux.Handle("/me", portfolioHandler())
-	mux.Handle("/", notFoundHandler())
+	mux.Handle("git.jst.dev/", handlerGit())
+	mux.Handle("/git/", handlerGit())
+
+	mux.Handle("me.jst.dev/", handlerPortfolio())
+	mux.Handle("/me/", handlerPortfolio())
+
+	mux.Handle("img.jst.dev/", handlerImg())
+	mux.Handle("/img/", handlerImg())
+
+	mux.Handle("/", handlerNotFound())
 
 	listenAddr := fmt.Sprintf(":%s", port)
 	log.Printf("[Reverse Proxy]: Listening on %s...\n", listenAddr)
@@ -57,29 +75,45 @@ func main() {
 	}
 }
 
-func portfolioHandler() *httputil.ReverseProxy {
+// HANDLERS
+
+func handlerPortfolio() *httputil.ReverseProxy {
 	// setup
-	urlPortfolio, err := url.Parse("https://jst.dev/")
+	urlProxy, err := url.Parse(URLPortfolio)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// handler
-	return newProxy(urlPortfolio)
+	return newReverserProxy(urlProxy)
 }
 
-func gitHandler() *httputil.ReverseProxy {
+func handlerGit() *httputil.ReverseProxy {
 	// setup
-	urlPortfolio, err := url.Parse("https://github.com/")
+	urlProxy, err := url.Parse(URLGit)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// handler
-	return newProxy(urlPortfolio)
+	return newReverserProxy(urlProxy)
 }
 
-func notFoundHandler() http.HandlerFunc {
+func handlerImg() *httputil.ReverseProxy {
+	// setup
+	urlProxy, err := url.Parse(URLImg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// handler
+	return newReverserProxy(urlProxy)
+}
+
+func handlerNotFound() http.HandlerFunc {
+	// setup
+
+	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "Not Found")
@@ -87,12 +121,14 @@ func notFoundHandler() http.HandlerFunc {
 	}
 }
 
-func newProxy(target *url.URL) *httputil.ReverseProxy {
+// PROXY
+func newReverserProxy(target *url.URL) *httputil.ReverseProxy {
 
 	errorLog := log.New(log.Writer(), "proxy error: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 	director := func(req *http.Request) {
-		log.Printf("Proxying\n\tfrom: %s\n\t  to: %s\n", req.URL.String(), target.String())
+		log.Printf("Proxying:\t%s  ->  %s\n", req.URL.String(), target.String())
+
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		req.Host = target.Host
