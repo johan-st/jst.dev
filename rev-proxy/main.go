@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// env vars
-	useTls := os.Getenv("TLS")
+	useTls := os.Getenv("TLS_ENABLED")
 	tlsCert := os.Getenv("TLS_CERT")
 	tlsKey := os.Getenv("TLS_KEY")
 
