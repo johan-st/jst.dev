@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,20 +17,29 @@ func main() {
 	useTls := os.Getenv("TLS_ENABLED")
 	tlsCert := os.Getenv("TLS_CERT")
 	tlsKey := os.Getenv("TLS_KEY")
+	port := os.Getenv("PORT")
 
-	// flags
-	flagPort := flag.Int("port", 8000, "port to serve on")
-	flag.Parse()
+	// default values
+	if tlsCert == "" {
+		tlsCert = "cert.pem"
+	}
+	if tlsKey == "" {
+		tlsKey = "key.pem"
+	}
+	if port == "" {
+		port = "8080"
+	}
 
+	// server
 	server := &server{
 		router: way.NewRouter(),
 	}
 
 	server.routes()
 
-	listenAddr := fmt.Sprintf(":%d", *flagPort)
+	listenAddr := fmt.Sprintf(":%s", port)
 	log.Printf("[Reverse Proxy]: Listening on %s...\n", listenAddr)
-	if useTls == "true" {
+	if useTls != "" && useTls != "false" && useTls != "0" && useTls != "no" {
 		log.Println("Using TLS")
 		log.Fatal(http.ListenAndServeTLS(listenAddr, tlsCert, tlsKey, server.router))
 	} else {
