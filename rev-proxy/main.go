@@ -56,6 +56,7 @@ type server struct {
 func (srv *server) routes() {
 	srv.router.Handle("GET", "git.jst.dev/", srv.gitHandler())
 	srv.router.Handle("GET", "me.jst.dev/", srv.portfolioHandler())
+	srv.router.NotFound = srv.notFoundHandler()
 
 }
 
@@ -79,6 +80,14 @@ func (srv *server) gitHandler() *httputil.ReverseProxy {
 
 	// handler
 	return newProxy(urlPortfolio)
+}
+
+func (srv *server) notFoundHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Not Found")
+		log.Printf("Not Found: %s\n", r.URL.Path)
+	}
 }
 
 func newProxy(target *url.URL) *httputil.ReverseProxy {
