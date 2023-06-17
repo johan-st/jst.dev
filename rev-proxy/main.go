@@ -89,7 +89,7 @@ func newProxy(target *url.URL) *httputil.ReverseProxy {
 	errorLog := log.New(log.Writer(), "proxy error: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 	director := func(req *http.Request) {
-		log.Printf("Proxying %s to %s\n", req.URL.String(), target.String()+req.URL.Path)
+		log.Printf("Proxying:\tfrom: %s\n\t  to: %s\n", req.URL.Scheme+req.URL.Host+req.URL.RawPath+req.URL.RawFragment+req.URL.RawQuery, target.Scheme+target.Host+target.RawPath+target.RawFragment+target.RawQuery)
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		req.Host = target.Host
