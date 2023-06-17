@@ -27,7 +27,7 @@ func main() {
 	tlsKey := os.Getenv("TLS_KEY")
 	useTls := os.Getenv("PROXY_TLS_ENABLED")
 	port := os.Getenv("PROXY_PORT")
-	pathLogfile := os.Getenv("PROXY_pathLOGFILE")
+	pathLogfile := os.Getenv("PROXY_LOGFILE")
 
 	// default values
 	if tlsCert == "" {
