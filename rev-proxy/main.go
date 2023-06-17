@@ -10,6 +10,16 @@ import (
 	"time"
 )
 
+const (
+	URLGit       = "https://github.com"
+	URLPortfolio = "https://jst.dev/"
+	URLImg       = "https://jst.dev:8080"
+
+	DefaultCert = "cert.pem"
+	DefaultKey  = "key.pem"
+	DefaultPort = "8080"
+)
+
 func main() {
 	// env vars
 	useTls := os.Getenv("TLS_ENABLED")
@@ -19,21 +29,14 @@ func main() {
 
 	// default values
 	if tlsCert == "" {
-		tlsCert = "cert.pem"
+		tlsCert = DefaultCert
 	}
 	if tlsKey == "" {
-		tlsKey = "key.pem"
+		tlsKey = DefaultKey
 	}
 	if port == "" {
-		port = "8080"
+		port = DefaultPort
 	}
-
-	// server
-	// server := &server{
-	// 	router: way.NewRouter(),
-	// }
-
-	// server.routes()
 
 	// routes
 	mux := http.NewServeMux()
