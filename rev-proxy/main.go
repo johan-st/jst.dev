@@ -31,20 +31,27 @@ func main() {
 	}
 
 	// server
-	server := &server{
-		router: way.NewRouter(),
-	}
+	// server := &server{
+	// 	router: way.NewRouter(),
+	// }
 
-	server.routes()
+	// server.routes()
+
+	// routes
+	mux := http.NewServeMux()
+	mux.Handle("git.jst.dev/", gitHandler())
+	mux.Handle("/git", gitHandler())
+	mux.Handle("me.jst.dev/", portfolioHandler())
+	mux.Handle("/me", portfolioHandler())
 
 	listenAddr := fmt.Sprintf(":%s", port)
 	log.Printf("[Reverse Proxy]: Listening on %s...\n", listenAddr)
 	if useTls != "" && useTls != "false" && useTls != "0" && useTls != "no" {
 		log.Println("Using TLS")
-		log.Fatal(http.ListenAndServeTLS(listenAddr, tlsCert, tlsKey, server.router))
+		log.Fatal(http.ListenAndServeTLS(listenAddr, tlsCert, tlsKey, mux))
 	} else {
 		log.Println("Not using TLS")
-		log.Fatal(http.ListenAndServe(listenAddr, server.router))
+		log.Fatal(http.ListenAndServe(listenAddr, mux))
 	}
 }
 
@@ -52,15 +59,7 @@ type server struct {
 	router *way.Router
 }
 
-// Register handlers for routes
-func (srv *server) routes() {
-	srv.router.Handle("GET", "git.jst.dev/", srv.gitHandler())
-	srv.router.Handle("GET", "me.jst.dev/", srv.portfolioHandler())
-	srv.router.NotFound = srv.notFoundHandler()
-
-}
-
-func (srv *server) portfolioHandler() *httputil.ReverseProxy {
+func portfolioHandler() *httputil.ReverseProxy {
 	// setup
 	urlPortfolio, err := url.Parse("https://jst.dev/")
 	if err != nil {
@@ -71,7 +70,7 @@ func (srv *server) portfolioHandler() *httputil.ReverseProxy {
 	return newProxy(urlPortfolio)
 }
 
-func (srv *server) gitHandler() *httputil.ReverseProxy {
+func gitHandler() *httputil.ReverseProxy {
 	// setup
 	urlPortfolio, err := url.Parse("https://github.com/")
 	if err != nil {
@@ -82,7 +81,7 @@ func (srv *server) gitHandler() *httputil.ReverseProxy {
 	return newProxy(urlPortfolio)
 }
 
-func (srv *server) notFoundHandler() http.HandlerFunc {
+func notFoundHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "Not Found")
