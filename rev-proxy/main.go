@@ -1,46 +1,65 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"time"
+)
 
-	"github.com/matryer/way"
+const (
+	URLGit       = "https://github.com"
+	URLPortfolio = "https://jst.dev/"
+	URLImg       = "https://jst.dev:8080"
+
+	DefaultCert = "cert.pem"
+	DefaultKey  = "key.pem"
+	DefaultPort = "8080"
 )
 
 func main() {
-	flagPort := flag.Int("port", 8000, "port to serve on")
-	flag.Parse()
+	// env vars
+	useTls := os.Getenv("TLS_ENABLED")
+	tlsCert := os.Getenv("TLS_CERT")
+	tlsKey := os.Getenv("TLS_KEY")
+	port := os.Getenv("PORT")
 
-	server := &server{
-		router: way.NewRouter(),
+	// default values
+	if tlsCert == "" {
+		tlsCert = DefaultCert
+	}
+	if tlsKey == "" {
+		tlsKey = DefaultKey
+	}
+	if port == "" {
+		port = DefaultPort
 	}
 
-	server.routes()
+	// routes
+	mux := http.NewServeMux()
+	mux.Handle("git.jst.dev/", gitHandler())
+	mux.Handle("/git", gitHandler())
+	mux.Handle("me.jst.dev/", portfolioHandler())
+	mux.Handle("/me", portfolioHandler())
+	mux.Handle("/", notFoundHandler())
 
-	listenAddr := fmt.Sprintf(":%d", *flagPort)
+	listenAddr := fmt.Sprintf(":%s", port)
 	log.Printf("[Reverse Proxy]: Listening on %s...\n", listenAddr)
-	log.Fatal(http.ListenAndServe(listenAddr, server.router))
+	if useTls != "" && useTls != "false" && useTls != "0" && useTls != "no" {
+		log.Println("Using TLS")
+		log.Fatal(http.ListenAndServeTLS(listenAddr, tlsCert, tlsKey, mux))
+	} else {
+		log.Println("Not using TLS")
+		log.Fatal(http.ListenAndServe(listenAddr, mux))
+	}
 }
 
-type server struct {
-	router *way.Router
-}
-
-// Register handlers for routes
-func (srv *server) routes() {
-	srv.router.Handle("GET", "git.jst.dev/", srv.gitHandler())
-	srv.router.Handle("GET", "/", srv.portfolioHandler())
-
-}
-
-func (srv *server) portfolioHandler() *httputil.ReverseProxy {
+func portfolioHandler() *httputil.ReverseProxy {
 	// setup
-	urlPortfolio, err := url.Parse("https://jst.dev")
+	urlPortfolio, err := url.Parse("https://jst.dev/")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,15 +68,23 @@ func (srv *server) portfolioHandler() *httputil.ReverseProxy {
 	return newProxy(urlPortfolio)
 }
 
-func (srv *server) gitHandler() *httputil.ReverseProxy {
+func gitHandler() *httputil.ReverseProxy {
 	// setup
-	urlPortfolio, err := url.Parse("https://github.com/johan-st")
+	urlPortfolio, err := url.Parse("https://github.com/")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// handler
 	return newProxy(urlPortfolio)
+}
+
+func notFoundHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Not Found")
+		log.Printf("Not Found: %s\n", r.URL.Path)
+	}
 }
 
 func newProxy(target *url.URL) *httputil.ReverseProxy {
@@ -65,7 +92,7 @@ func newProxy(target *url.URL) *httputil.ReverseProxy {
 	errorLog := log.New(log.Writer(), "proxy error: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 	director := func(req *http.Request) {
-		log.Printf("Proxying %s to %s\n", req.URL.Path, target)
+		log.Printf("Proxying\n\tfrom: %s\n\t  to: %s\n", req.URL.String(), target.String())
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		req.Host = target.Host
