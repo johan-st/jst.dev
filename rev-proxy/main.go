@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"os"
 	"time"
-
-	"github.com/matryer/way"
 )
 
 func main() {
@@ -43,6 +41,7 @@ func main() {
 	mux.Handle("/git", gitHandler())
 	mux.Handle("me.jst.dev/", portfolioHandler())
 	mux.Handle("/me", portfolioHandler())
+	mux.Handle("/", notFoundHandler())
 
 	listenAddr := fmt.Sprintf(":%s", port)
 	log.Printf("[Reverse Proxy]: Listening on %s...\n", listenAddr)
@@ -53,10 +52,6 @@ func main() {
 		log.Println("Not using TLS")
 		log.Fatal(http.ListenAndServe(listenAddr, mux))
 	}
-}
-
-type server struct {
-	router *way.Router
 }
 
 func portfolioHandler() *httputil.ReverseProxy {
@@ -94,7 +89,7 @@ func newProxy(target *url.URL) *httputil.ReverseProxy {
 	errorLog := log.New(log.Writer(), "proxy error: ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile)
 
 	director := func(req *http.Request) {
-		log.Printf("Proxying %s to %s\n", req.URL.Path, target)
+		log.Printf("Proxying %s to %s\n", req.URL.String(), target.String()+req.URL.Path)
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		req.Host = target.Host
