@@ -13,7 +13,7 @@ import (
 const (
 	URLGit       = "https://github.com"
 	URLPortfolio = "https://jst.dev/"
-	URLImg       = "http://jst.dev:8080"
+	URLImg       = "http://img.jst.dev:8080"
 
 	DefaultCert    = "/etc/letsencrypt/live/me.jst.dev/cert.pem"
 	DefaultKey     = "/etc/letsencrypt/live/me.jst.dev/privkey.pem"
