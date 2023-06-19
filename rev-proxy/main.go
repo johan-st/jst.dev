@@ -13,11 +13,11 @@ import (
 const (
 	URLGit       = "https://github.com"
 	URLPortfolio = "https://jst.dev/"
-	URLImg       = "https://jst.dev:8080"
+	URLImg       = "http://jst.dev:8080"
 
-	DefaultCert    = "cert.pem"
-	DefaultKey     = "key.pem"
-	DefaultPort    = "8080"
+	DefaultCert    = "/etc/letsencrypt/live/me.jst.dev/cert.pem"
+	DefaultKey     = "/etc/letsencrypt/live/me.jst.dev/key.pem"
+	DefaultPort    = "443"
 	DefaultLogfile = "proxy.log"
 )
 
