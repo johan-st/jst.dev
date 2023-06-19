@@ -16,7 +16,7 @@ const (
 	URLImg       = "http://jst.dev:8080"
 
 	DefaultCert    = "/etc/letsencrypt/live/me.jst.dev/cert.pem"
-	DefaultKey     = "/etc/letsencrypt/live/me.jst.dev/key.pem"
+	DefaultKey     = "/etc/letsencrypt/live/me.jst.dev/privkey.pem"
 	DefaultPort    = "443"
 	DefaultLogfile = "proxy.log"
 )
