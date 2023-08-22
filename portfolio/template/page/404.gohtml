@@ -1,0 +1,8 @@
+{{ define "main"}}
+
+{{if .IsHome}}
+    {{ partial "home.html" . }}
+{{else}}
+    {{ partial "page.html" . }}
+
+{{end}}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ .Title}}</title>
+
+    {{range .CSS}}
+    <link rel="stylesheet" href="{{.}}">
+    {{end}}
+
+    {{range .JS}}
+    <script src="{{.}}"></script>
+    {{end}}
+
+    {{range $name, $content := .Meta}}
+    <meta name="{{$name}}" content="{{$content}}">
+    {{end}}
+
+</head>
+
+<body>
+    <header>
+        {{template "header"}}
+    </header>
+    <nav>
+        {{/* {{template "nav"}} */}}
+    </nav>
+    <main>
+        {{template "main" .PageData}}
+    </main>
+    <footer>
+        {{/* {{template "footer"}} */}}
+    </footer>
+</body>
+
+</html>
+
+

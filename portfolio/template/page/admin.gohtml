@@ -1,0 +1,16 @@
+{{define "main"}}
+
+<h2>Welcome to the admin-page</h2>
+{{if .Message}}
+<p>{{.Message}}</p>
+{{end}}
+
+{{if .Error}}
+<p>{{.Error}}</p>
+{{end}}
+
+{{if .User}}
+<p>Logged in as {{.User}}</p>
+{{end}}
+
+{{end}}
