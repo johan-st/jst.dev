@@ -35,42 +35,44 @@ func (h *handler) routes() {
 	h.router.NotFound = h.handleNotFound()
 }
 
+// PAGE type and data
+var (
+	baseFiles = []string{"template/layout/base.gohtml", "template/layout/header.gohtml"}
+	baseCSS   = []string{"/assets/style.css"}
+	baseJS    = []string{}
+	// baseJS    = []string{"https://cdn.tailwindcss.com"}
+	baseMeta = map[string]string{
+		"description": "Portfolio and playground for Johan Strand",
+		"author":      "Johan Strand",
+		"keywords":    "portfolio, johan-st, Johan Strand, projects, blog, images, full stack, software, developer, web-dev, web developer, golang, go, javascript, react, reactjs, nextjs, nodejs, typescript, ts, html, css, sass, scss, tailwindcss, tailwind, postgres, sql, mongodb, nosql, docker, kubernetes, k8s, aws, amazon web services, cloud, cloud computing, serverless, lambda, api, rest, graphql, jamstack, server side rendering, ssr, static site generator, ssg, web development, webdev, web development, webdev, fullstack, full stack, full-stack, fullstack developer, full stack developer, full-stack developer, fullstack dev, full stack dev, full-stack dev, fullstack development, full stack development, full-stack development, fullstack web development, full stack web development, full-stack web development, fullstack webdev, full stack webdev, full-stack webdev, fullstack web dev, full stack web dev, full-stack web dev",
+	}
+)
+
+type page struct {
+	file     string
+	linkText string
+	path     string
+
+	Title string
+	Meta  map[string]string
+	CSS   []string
+	JS    []string
+
+	PageData any
+}
+
+type adminData struct {
+	Message string
+	User    string
+	Error   string
+}
+
 // HANDLERS
-
 func (h *handler) handlePage() http.HandlerFunc {
-	// types
-
-	type tmplPage struct {
-		file     string
-		linkText string
-		path     string
-
-		Title string
-		Meta  map[string]string
-		CSS   []string
-		JS    []string
-
-		PageData any
-	}
-
-	type AdminData struct {
-		Message string
-		User    string
-		Error   string
-	}
-
 	// pages
-	var (
-		baseFiles = []string{"template/layout/base.gohtml", "template/layout/header.gohtml"}
-		baseCSS   = []string{"/assets/style.css"}
-		baseJS    = []string{}
-		baseMeta  = map[string]string{
-			"description": "Portfolio and playground for Johan Strand",
-			"author":      "Johan Strand",
-			"keywords":    "portfolio, johan-st, Johan Strand, projects, blog, images",
-		}
 
-		pageIndex = tmplPage{
+	var (
+		pageIndex = page{
 			file:     "index.gohtml",
 			linkText: "Home",
 			path:     "/",
@@ -83,7 +85,7 @@ func (h *handler) handlePage() http.HandlerFunc {
 			PageData: nil,
 		}
 
-		pageAdmin = tmplPage{
+		pageAdmin = page{
 			file:     "admin.gohtml",
 			linkText: "Admin",
 			path:     "/admin",
@@ -93,7 +95,7 @@ func (h *handler) handlePage() http.HandlerFunc {
 			CSS:   baseCSS,
 			JS:    baseJS,
 
-			PageData: AdminData{},
+			PageData: adminData{},
 		}
 	)
 
@@ -142,7 +144,7 @@ func (h *handler) handlePage() http.HandlerFunc {
 		case "admin":
 			l.Debug("serving page", "page", "admin")
 
-			pageAdmin.PageData = AdminData{
+			pageAdmin.PageData = adminData{
 				Message: "Hello, admin!",
 				Error:   "This is an error message",
 				User:    "Johan",
@@ -156,7 +158,7 @@ func (h *handler) handlePage() http.HandlerFunc {
 
 		default:
 			l.Debug("serving page", "page", "default")
-			h.respondError(w, r, "not found", http.StatusNotFound)
+			h.handleNotFound()(w, r)
 		}
 
 	}
@@ -204,11 +206,38 @@ func (h *handler) handleFavicon() http.HandlerFunc {
 
 func (h *handler) handleNotFound() http.HandlerFunc {
 	// setup
+	page404 := page{
+		file:     "404.gohtml",
+		linkText: "404",
+		path:     "/404",
+
+		Title: "404 | jst.dev",
+		Meta:  baseMeta,
+
+		CSS: baseCSS,
+		JS:  baseJS,
+
+		PageData: nil,
+	}
+
 	l := h.l.With("handler", "handleNotFound")
+	tmpl, err := template.ParseFS(h.fs, append(baseFiles, "template/page/"+page404.file)...)
+	if err != nil {
+		l.Fatal("Could not parse 404 template", "error", err)
+	}
+
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		l.Debug("handling request", "path", r.URL.Path)
-		h.respondError(w, r, "not found", http.StatusNotFound)
+
+		l.Printf("%#v", page404)
+
+		w.WriteHeader(http.StatusNotFound)
+		err = tmpl.Execute(w, page404)
+		if err != nil {
+			l.Error("Could not execute template", "error", err)
+			h.respondError(w, r, "internal server error", http.StatusInternalServerError)
+		}
 	}
 }
 func (h *handler) handleNotAllowed() http.HandlerFunc {
@@ -236,21 +265,20 @@ func (h *handler) respondCode(w http.ResponseWriter, r *http.Request, code int) 
 // respondError sends out a respons containing an error. This helper function is meant to be generic enough to serve most needs to communicate errors to the users
 func (h *handler) respondError(w http.ResponseWriter, r *http.Request, msg string, statusCode int) {
 	w.WriteHeader(statusCode)
-
 	fmt.Fprintf(w, "<html><h1>%d</h1><pre>%s</pre></html>", statusCode, msg)
 }
 
 // OTHER ESSENTIALS
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t := time.Now()
+	// t := time.Now()
 
 	h.router.ServeHTTP(w, r)
 
-	h.l.Print(t.UTC().Local(),
-		"method", r.Method,
-		"url", r.Host+r.URL.String(),
-		"remote", r.RemoteAddr,
-		"user-agent", r.UserAgent(),
-		"time elapsed", time.Since(t))
+	// h.l.Print(t.UTC().Local(),
+	// 	"method", r.Method,
+	// 	"url", r.Host+r.URL.String(),
+	// 	"remote", r.RemoteAddr,
+	// 	"user-agent", r.UserAgent(),
+	// 	"time elapsed", time.Since(t))
 }
