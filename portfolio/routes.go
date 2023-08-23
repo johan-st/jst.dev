@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/matryer/way"
+	"gitlab.com/golang-commonmark/markdown"
 )
 
 type handler struct {
@@ -71,6 +71,11 @@ type page struct {
 	JS       []string
 	NavLinks map[string]string
 
+	// empty string means no markdown
+	markdownFile string
+	// rendered markdown
+	Markdown string
+
 	PageData any
 	pageDataGetter
 }
@@ -115,6 +120,17 @@ func (h *handler) handlePage() http.HandlerFunc {
 
 			pageDataGetter: getDataAdmin,
 		},
+		{
+			file:         "about.gohtml",
+			linkText:     "About",
+			path:         "about",
+			markdownFile: "about.md",
+
+			Title: "About | jst.dev",
+			Meta:  baseMeta,
+			CSS:   baseCSS,
+			JS:    baseJS,
+		},
 	}
 
 	// setup
@@ -132,17 +148,18 @@ func (h *handler) handlePage() http.HandlerFunc {
 	if err != nil {
 		l.Fatal("Could not build templates", "error", err)
 	}
-
-	// make links
+	err = renderMarkdown(h.fs, &pages)
+	if err != nil {
+		l.Fatal("Could not render markdown", "error", err)
+	}
+	// make and add nav-links
 	links := make(map[string]string)
 	for _, p := range pages {
 		links[p.path] = p.linkText
 	}
 	for i := range pages {
 		pages[i].NavLinks = links
-		l.Debug("page", "page", pages[i].NavLinks)
 	}
-	l.Debug("page", "page", pages[0].NavLinks)
 
 	err = testExecution(pages)
 	if err != nil {
@@ -172,7 +189,6 @@ func (h *handler) handlePage() http.HandlerFunc {
 					p.PageData = pData
 
 				}
-				l.Warnf("before loop: %#v", p.NavLinks)
 				err = p.tmplParsed.Execute(w, p)
 				if err != nil {
 					l.Error("Could not execute template", "error", err)
@@ -195,26 +211,33 @@ func (h *handler) handleAssets() http.HandlerFunc {
 	// setup
 	l := h.l.With("handler", "handleAssets")
 	return func(w http.ResponseWriter, r *http.Request) {
-		l.Debug("handling request", "path", r.URL.Path)
-		file := strings.TrimPrefix(r.URL.Path, "/assets/")
-		if file == "" {
+		reqFile := strings.TrimPrefix(r.URL.Path, "/assets/")
+		if reqFile == "" {
 			h.respondError(w, r, "not found", http.StatusNotFound)
 			return
 		}
 
-		f, err := staticFS.ReadFile("assets/" + file)
+		file, err := h.fs.Open("assets/" + reqFile)
 		if err != nil {
-			l.Debug("could not find asset", "file", file, "error", err)
+			l.Debug("could not open asset", "file", reqFile, "error", err)
 			h.respondError(w, r, "not found", http.StatusNotFound)
 			return
 		}
+		defer file.Close()
 
-		mimeType := mime.TypeByExtension(path.Ext(file))
-		l.Debug("serving asset", "file", file, "Content-Type", mimeType)
+		bytes, err := io.ReadAll(file)
+		if err != nil {
+			l.Error("could not read asset", "file", reqFile, "error", err)
+			h.respondError(w, r, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		mimeType := mime.TypeByExtension(path.Ext(reqFile))
+		l.Debug("serving asset", "file", reqFile, "Content-Type", mimeType)
 		w.Header().Add("Content-Type", mimeType)
 
 		w.WriteHeader(http.StatusOK)
-		w.Write(f)
+		w.Write(bytes)
 	}
 
 }
@@ -223,11 +246,26 @@ func (h *handler) handleAssets() http.HandlerFunc {
 func (h *handler) handleFavicon() http.HandlerFunc {
 	// setup
 	l := h.l.With("handler", "handleFavicon")
+	file, err := h.fs.Open("assets/favicon.ico")
+	if err != nil {
+		l.Fatal("could not open favicon", "error", err)
+	}
+	defer file.Close()
+
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		l.Fatal("could not read favicon", "error", err)
+	}
+
+	mimeType := mime.TypeByExtension(path.Ext("favicon.ico"))
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
-		l.Debug("handling request", "path", r.URL.Path)
-		http.ServeFile(w, r, "assets/favicon.ico")
+		l.Debug("serving favicon", "Content-Type", mimeType)
+
+		w.Header().Add("Content-Type", mimeType)
+		w.WriteHeader(http.StatusOK)
+		w.Write(bytes)
 	}
 }
 
@@ -326,6 +364,30 @@ func buildTemplates(fs fs.FS, base *template.Template, pages *[]page) error {
 	return nil
 }
 
+func renderMarkdown(fs fs.FS, pages *[]page) error {
+	md := markdown.New(markdown.XHTMLOutput(true))
+
+	for i, p := range *pages {
+		if p.markdownFile == "" {
+			continue
+		}
+		file, err := fs.Open("template/page/" + p.markdownFile)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		bytes, err := io.ReadAll(file)
+		if err != nil {
+			return err
+		}
+
+		(*pages)[i].Markdown = md.RenderToString(bytes)
+	}
+
+	return nil
+}
+
 func testExecution(pages []page) error {
 	for _, p := range pages {
 		err := p.tmplParsed.Execute(io.Discard, p)
@@ -334,10 +396,4 @@ func testExecution(pages []page) error {
 		}
 	}
 	return nil
-}
-
-func addNavLinks(pages *[]page) error {
-
-	return nil
-	return errors.New("not implemented")
 }

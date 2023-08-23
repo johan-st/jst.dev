@@ -1,16 +1,18 @@
 {{define "main"}}
+{{$d:= .PageData}}
 
 <h2>Welcome to the admin-page</h2>
-{{if .Message}}
-<p>{{.Message}}</p>
+
+{{if $d.Message}}
+<p>{{$d.Message}}</p>
 {{end}}
 
-{{if .Error}}
-<p>{{.Error}}</p>
+{{if $d.Error}}
+<p>{{$d.Error}}</p>
 {{end}}
 
-{{if .User}}
-<p>Logged in as {{.User}}</p>
+{{if $d.User}}
+<p>Logged in as {{$d.User}}</p>
 {{end}}
 
 {{end}}

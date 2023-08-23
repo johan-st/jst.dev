@@ -27,11 +27,7 @@
         {{template "nav" .NavLinks}} 
     </nav>
     <main>
-    {{if .PageData}}
-        {{template "main" .PageData}}
-    {{else}}
-        {{template "main"}}
-    {{end}}
+        {{template "main" .}}
     </main>
     <footer>
         {{/* {{template "footer"}} */}}
