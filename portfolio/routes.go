@@ -28,11 +28,14 @@ func (h *handler) routes() {
 
 	// STATIC ASSETS
 	h.router.HandleFunc("GET", "/favicon.ico", h.handleFavicon())
-	// srv.router.HandleFunc("GET", "/robots.txt", srv.handleRobots())
 	h.router.HandleFunc("GET", "/assets/", h.handleAssets())
 
+	// basic pages
 	h.router.HandleFunc("GET", "/:page", h.handlePage())
+
+	// 405
 	h.router.HandleFunc("*", "*", h.handleNotAllowed())
+
 	// 404
 	h.router.NotFound = h.handleNotFound()
 }
@@ -147,11 +150,17 @@ func (h *handler) handlePage() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		l.Debug("handling request", "path", r.URL.Path)
 		requestedPage := way.Param(r.Context(), "page")
+
+		// DEBUG
+
 		for _, p := range pages {
 			if requestedPage == p.path {
-				l.Debug("serving page", "page", requestedPage)
+				l.Debug(
+					"serving page",
+					"page", requestedPage,
+					"path", r.URL.Path,
+				)
 
 				if p.pageDataGetter != nil {
 					var pData any
@@ -163,7 +172,7 @@ func (h *handler) handlePage() http.HandlerFunc {
 					p.PageData = pData
 
 				}
-
+				l.Warnf("before loop: %#v", p.NavLinks)
 				err = p.tmplParsed.Execute(w, p)
 				if err != nil {
 					l.Error("Could not execute template", "error", err)
@@ -173,7 +182,11 @@ func (h *handler) handlePage() http.HandlerFunc {
 			}
 		}
 
-		l.Debug("serving page", "page", "default")
+		l.Debug(
+			"serving page 404 not found",
+			"page", requestedPage,
+			"path", r.URL.Path,
+		)
 		h.handleNotFound()(w, r)
 
 	}
@@ -243,8 +256,6 @@ func (h *handler) handleNotFound() http.HandlerFunc {
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		l.Debug("handling request", "path", r.URL.Path)
-
-		l.Printf("%#v", page404)
 
 		w.WriteHeader(http.StatusNotFound)
 		err = tmpl.Execute(w, page404)
