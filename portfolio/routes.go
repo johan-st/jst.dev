@@ -48,10 +48,13 @@ var (
 	}
 )
 
+type pageDataGetter func(*http.Request) (any, error)
+
 type page struct {
-	file     string
-	linkText string
-	path     string
+	file       string
+	linkText   string
+	path       string
+	tmplParsed *template.Template
 
 	Title string
 	Meta  map[string]string
@@ -59,48 +62,56 @@ type page struct {
 	JS    []string
 
 	PageData any
+	pageDataGetter
 }
 
-type adminData struct {
+type pageDataAdmin struct {
 	Message string
 	User    string
 	Error   string
 }
 
+func getDataAdmin(req *http.Request) (any, error) {
+	time.Sleep(time.Millisecond * 500)
+	return pageDataAdmin{
+		Message: "hello world",
+		User:    "master Johan",
+	}, nil
+}
+
 // HANDLERS
+
 func (h *handler) handlePage() http.HandlerFunc {
 	// pages
-
-	var (
-		pageIndex = page{
+	pages := []page{
+		{
 			file:     "index.gohtml",
 			linkText: "Home",
-			path:     "/",
+			path:     "",
 
 			Title: "Home | jst.dev",
 			Meta:  baseMeta,
 			CSS:   baseCSS,
 			JS:    baseJS,
-
-			PageData: nil,
-		}
-
-		pageAdmin = page{
+		},
+		{
 			file:     "admin.gohtml",
-			linkText: "Admin",
-			path:     "/admin",
+			linkText: "Administration",
+			path:     "admin",
 
 			Title: "Admin | jst.dev",
 			Meta:  baseMeta,
 			CSS:   baseCSS,
 			JS:    baseJS,
 
-			PageData: adminData{},
-		}
-	)
+			pageDataGetter: getDataAdmin,
+		},
+	}
 
 	// setup
 	l := h.l.With("handler", "handlePage")
+	l.SetReportCaller(true)
+
 	defer func(t time.Time) {
 		l.Info("teplates parsed and ready to be served", "time", time.Since(t))
 	}(time.Now())
@@ -109,61 +120,43 @@ func (h *handler) handlePage() http.HandlerFunc {
 	if err != nil {
 		l.Fatal("Could not parse base template", "error", err)
 	}
-
-	// INDEX PAGE
-	tmplIndex, err := tmplBase.Clone()
+	err = buildTemplates(h.fs, tmplBase, &pages)
 	if err != nil {
-		l.Fatal("Could not clone base template", "error", err)
-	}
-	tmplIndex, err = tmplIndex.ParseFS(h.fs, "template/page/"+pageIndex.file)
-	if err != nil {
-		l.Fatal("Could not parse index template", "error", err)
-	}
-
-	// ADMIN PAGE
-	tmplAdmin, err := tmplBase.Clone()
-	if err != nil {
-		l.Fatal("Could not clone base template", "error", err)
-	}
-	tmplAdmin, err = tmplAdmin.ParseFS(h.fs, "template/page/"+pageAdmin.file)
-	if err != nil {
-		l.Fatal("Could not parse admin template", "error", err)
+		l.Fatal("Could not build templates", "error", err)
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		l.Debug("handling request", "path", r.URL.Path)
 		requestedPage := way.Param(r.Context(), "page")
-		switch requestedPage {
-		case "":
-			l.Debug("serving page", "page", "index")
-			err = tmplIndex.Execute(w, pageIndex)
-			if err != nil {
-				l.Error("Could not execute template", "error", err)
-				h.respondError(w, r, "internal server error", http.StatusInternalServerError)
-			}
-		case "admin":
-			l.Debug("serving page", "page", "admin")
+		for _, p := range pages {
+			if requestedPage == p.path {
+				l.Debug("serving page", "page", requestedPage)
 
-			pageAdmin.PageData = adminData{
-				Message: "Hello, admin!",
-				Error:   "This is an error message",
-				User:    "Johan",
-			}
+				if p.pageDataGetter != nil {
+					var pData any
+					pData, err := p.pageDataGetter(r)
+					if err != nil {
+						l.Warn("Failed to get page data")
+						pData = nil
+					}
+					p.PageData = pData
 
-			err = tmplAdmin.Execute(w, pageAdmin)
-			if err != nil {
-				l.Error("Could not execute template", "error", err)
-				h.respondError(w, r, "internal server error", http.StatusInternalServerError)
-			}
+				}
 
-		default:
-			l.Debug("serving page", "page", "default")
-			h.handleNotFound()(w, r)
+				err = p.tmplParsed.Execute(w, p)
+				if err != nil {
+					l.Error("Could not execute template", "error", err)
+					h.respondError(w, r, "internal server error", http.StatusInternalServerError)
+				}
+				return
+			}
 		}
+
+		l.Debug("serving page", "page", "default")
+		h.handleNotFound()(w, r)
 
 	}
 }
-
 func (h *handler) handleAssets() http.HandlerFunc {
 	// setup
 	l := h.l.With("handler", "handleAssets")
@@ -281,4 +274,22 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 	"remote", r.RemoteAddr,
 	// 	"user-agent", r.UserAgent(),
 	// 	"time elapsed", time.Since(t))
+}
+
+// Template helpers
+
+func buildTemplates(fs fs.FS, base *template.Template, pages *[]page) error {
+
+	for i, p := range *pages {
+		baseClone, err := base.Clone()
+		if err != nil {
+			return err
+		}
+		tmpl, err := baseClone.ParseFS(fs, "template/page/"+p.file)
+		if err != nil {
+			return err
+		}
+		(*pages)[i].tmplParsed = tmpl
+	}
+	return nil
 }
