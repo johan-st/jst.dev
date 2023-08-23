@@ -23,12 +23,16 @@ func main() {
 func run() error {
 
 	flagDebug := flag.Bool("debug", false, "debug mode")
+	flagDev := flag.Bool("dev", false, "extra info for developers")
 	flag.Parse()
 
 	logger := log.New(os.Stderr)
 	logger.SetReportTimestamp(true)
 	if *flagDebug {
 		logger.SetLevel(log.DebugLevel)
+	}
+	if *flagDev {
+		logger.SetReportCaller(true)
 	}
 
 	handler := handler{

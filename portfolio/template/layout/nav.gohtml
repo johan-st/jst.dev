@@ -1,0 +1,9 @@
+{{define "nav"}}
+<ul>
+{{range $path, $linkText := .NavLinks}}
+<li>
+    <a href="/$path">$linkText</a>
+</li>
+{{end}}
+</ul>
+{{end}}

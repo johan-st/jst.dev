@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"mime"
 	"net/http"
@@ -37,9 +39,13 @@ func (h *handler) routes() {
 
 // PAGE type and data
 var (
-	baseFiles = []string{"template/layout/base.gohtml", "template/layout/header.gohtml"}
-	baseCSS   = []string{"/assets/style.css"}
-	baseJS    = []string{}
+	baseFiles = []string{
+		"template/layout/base.gohtml",
+		"template/layout/header.gohtml",
+		"template/layout/nav.gohtml",
+	}
+	baseCSS = []string{"/assets/style.css"}
+	baseJS  = []string{}
 	// baseJS    = []string{"https://cdn.tailwindcss.com"}
 	baseMeta = map[string]string{
 		"description": "Portfolio and playground for Johan Strand",
@@ -56,10 +62,11 @@ type page struct {
 	path       string
 	tmplParsed *template.Template
 
-	Title string
-	Meta  map[string]string
-	CSS   []string
-	JS    []string
+	Title    string
+	Meta     map[string]string
+	CSS      []string
+	JS       []string
+	NavLinks map[string]string
 
 	PageData any
 	pageDataGetter
@@ -72,7 +79,6 @@ type pageDataAdmin struct {
 }
 
 func getDataAdmin(req *http.Request) (any, error) {
-	time.Sleep(time.Millisecond * 500)
 	return pageDataAdmin{
 		Message: "hello world",
 		User:    "master Johan",
@@ -110,10 +116,9 @@ func (h *handler) handlePage() http.HandlerFunc {
 
 	// setup
 	l := h.l.With("handler", "handlePage")
-	l.SetReportCaller(true)
 
 	defer func(t time.Time) {
-		l.Info("teplates parsed and ready to be served", "time", time.Since(t))
+		l.Info("templates parsed and ready to be served", "time", time.Since(t))
 	}(time.Now())
 
 	tmplBase, err := template.ParseFS(h.fs, baseFiles...)
@@ -123,6 +128,22 @@ func (h *handler) handlePage() http.HandlerFunc {
 	err = buildTemplates(h.fs, tmplBase, &pages)
 	if err != nil {
 		l.Fatal("Could not build templates", "error", err)
+	}
+
+	// make links
+	links := make(map[string]string)
+	for _, p := range pages {
+		links[p.path] = p.linkText
+	}
+	for i := range pages {
+		pages[i].NavLinks = links
+		l.Debug("page", "page", pages[i].NavLinks)
+	}
+	l.Debug("page", "page", pages[0].NavLinks)
+
+	err = testExecution(pages)
+	if err != nil {
+		l.Fatal("Trial execution error:", err)
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -292,4 +313,20 @@ func buildTemplates(fs fs.FS, base *template.Template, pages *[]page) error {
 		(*pages)[i].tmplParsed = tmpl
 	}
 	return nil
+}
+
+func testExecution(pages []page) error {
+	for _, p := range pages {
+		err := p.tmplParsed.Execute(io.Discard, p)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func addNavLinks(pages *[]page) error {
+
+	return nil
+	return errors.New("not implemented")
 }
