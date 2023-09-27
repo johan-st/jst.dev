@@ -220,30 +220,7 @@ func Translated(trans []Translation) templ.Component {
 			if err != nil {
 				return err
 			}
-			_, err = templBuffer.WriteString("</h2><p>")
-			if err != nil {
-				return err
-			}
-			var_18 := `Prompt was: `
-			_, err = templBuffer.WriteString(var_18)
-			if err != nil {
-				return err
-			}
-			var var_19 string = tran.Prompt
-			_, err = templBuffer.WriteString(templ.EscapeString(var_19))
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</p><h3>")
-			if err != nil {
-				return err
-			}
-			var_20 := `Translated Text:`
-			_, err = templBuffer.WriteString(var_20)
-			if err != nil {
-				return err
-			}
-			_, err = templBuffer.WriteString("</h3>")
+			_, err = templBuffer.WriteString("</h2>")
 			if err != nil {
 				return err
 			}
@@ -252,8 +229,8 @@ func Translated(trans []Translation) templ.Component {
 				if err != nil {
 					return err
 				}
-				var_21 := `nothing yet...`
-				_, err = templBuffer.WriteString(var_21)
+				var_18 := `nothing yet...`
+				_, err = templBuffer.WriteString(var_18)
 				if err != nil {
 					return err
 				}
@@ -266,8 +243,8 @@ func Translated(trans []Translation) templ.Component {
 			if err != nil {
 				return err
 			}
-			var var_22 string = tran.Choices[0]
-			_, err = templBuffer.WriteString(templ.EscapeString(var_22))
+			var var_19 string = tran.Choices[0]
+			_, err = templBuffer.WriteString(templ.EscapeString(var_19))
 			if err != nil {
 				return err
 			}

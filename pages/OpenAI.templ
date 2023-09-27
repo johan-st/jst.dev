@@ -55,8 +55,6 @@ templ Translated(trans []Translation) {
             <div class="translation__divider"></div>
             <div class="translation__single">
             <h2>Translation {fmt.Sprintf("%d", len(trans)-i)}</h2>
-                <p>Prompt was: {tran.Prompt}</p>
-                <h3>Translated Text:</h3>
                 if len(tran.Choices) == 0{
                     <p>nothing yet...</p>
                 }<p>{tran.Choices[0]}</p>
