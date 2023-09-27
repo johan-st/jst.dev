@@ -7,6 +7,7 @@ import (
 
 	"github.com/johan-st/jst.dev/pages"
 	ai "github.com/johan-st/openAI"
+	
 )
 
 func (srv *server) handleAiTranslation() http.HandlerFunc {
@@ -79,5 +80,43 @@ func (srv *server) handleAiTranslation() http.HandlerFunc {
 			return
 		}
 
+	}
+}
+
+func (srv *server) handleTestAI() http.HandlerFunc {
+	// timing and logging
+	l := srv.l.With("handler", "ApiTranslation")
+	defer func(t time.Time) {
+		l.Info(
+			"ready",
+			"time", time.Since(t),
+		)
+	}(time.Now())
+
+	// setup
+
+	OPENAI_API_KEY := os.Getenv("OPENAI_API_KEY")
+	if OPENAI_API_KEY == "" {
+		l.Fatal("OPENAI_API_KEY not set")
+	}
+	chan, err := ai.TranslateStream(OPENAI_API_KEY, "Spanihs", "snakar du norsk torsk eller är du glad att se mig (sexual inuendo)?")
+	for cha  
+	}
+	if err != nil {
+		l.Fatal("test stream", "error", err)
+	}
+
+	// handler
+	return func(w http.ResponseWriter, r *http.Request) {
+		// timing and logging
+		l := srv.l.With("handler", "ApiTranslation")
+		defer func(t time.Time) {
+			l.Debug(
+				"responded",
+				"time", time.Since(t),
+			)
+		}(time.Now())
+
+		srv.respCode(http.StatusNotImplemented, w, r)
 	}
 }

@@ -26,7 +26,7 @@ func OpenAI() templ.Component {
 			var_1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, err = templBuffer.WriteString("<div class=\"translation__form-container\"><form class=\"translation__form\" hx-post=\"/ai/translate\" hx-target=\"#translation\" hx-indicator=\"#spinner\" hx-disabled-elt=\"this\"><h3>")
+		_, err = templBuffer.WriteString("<div class=\"translation__form-container\"><form class=\"translation__form\" hx-post=\"/ai/translate\" hx-target=\"#translation\" hx-indicator=\"#spinner\"><h3>")
 		if err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ func OpenAI() templ.Component {
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString("</option></select><input type=\"submit\" value=\"Translate\"></div></form></div><div id=\"translation\">")
+		_, err = templBuffer.WriteString("</option></select><input class=\"button\" type=\"submit\" value=\"Translate\" hx-disabled-elt=\"this\"></div></form></div><div id=\"translation\">")
 		if err != nil {
 			return err
 		}

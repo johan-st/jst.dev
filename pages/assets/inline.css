@@ -106,6 +106,13 @@ textarea:focus {
   padding: 1rem 0 2rem;
 }
 
+input {
+  color: var(--clr-background);
+  background: var(--clr-secondary);
+  border: 1px solid var(--clr-primary);
+  font-size: 1.2rem;
+  margin: 1rem;
+}
 .translation__form-input-container>input[type=select] {
   margin-right: auto;
 

@@ -8,6 +8,8 @@ require (
 	github.com/johan-st/openAI v0.0.0-20230926222515-af9346d3c639
 )
 
+require github.com/lampctl/go-sse v1.1.4 // indirect
+
 require (
 	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

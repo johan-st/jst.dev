@@ -12,7 +12,6 @@ templ OpenAI() {
                 hx-post="/ai/translate"
                 hx-target="#translation"
                 hx-indicator="#spinner"
-                hx-disabled-elt="this"
                 >                      
             <h3>Text to translate:</h3> 
             <label for="text">prompt:</label>                                     
@@ -28,7 +27,8 @@ templ OpenAI() {
                     <option value="Dutch">Dutch</option>
                     <option value="German">German</option>
                 </select>     
-                <input type="submit" value="Translate" />   
+                <input class="button" type="submit" value="Translate" 
+                    hx-disabled-elt="this"/>   
             </div>                          
         </form>  
     </div>

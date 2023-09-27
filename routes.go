@@ -73,6 +73,9 @@ func (srv *server) prepareRoutes() {
 
 	// 404
 	srv.router.NotFound = srv.handleNotFound()
+
+	srv.handleTestAI()
+	
 }
 
 // HANDLERS
