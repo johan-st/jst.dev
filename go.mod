@@ -5,10 +5,8 @@ go 1.20
 require (
 	github.com/a-h/templ v0.2.334
 	github.com/charmbracelet/log v0.2.4
-	github.com/johan-st/openAI v0.0.0-20230926222515-af9346d3c639
+	github.com/sashabaranov/go-openai v1.15.3
 )
-
-require github.com/lampctl/go-sse v1.1.4 // indirect
 
 require (
 	github.com/alecthomas/chroma v0.10.0 // indirect

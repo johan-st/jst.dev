@@ -1,16 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/johan-st/jst.dev/pages"
-	ai "github.com/johan-st/openAI"
-	
+	ai "github.com/sashabaranov/go-openai"
 )
 
-func (srv *server) handleAiTranslation() http.HandlerFunc {
+func (srv *server) handleAiTranslationPost() http.HandlerFunc {
 	// timing and logging
 	l := srv.l.With("handler", "ApiTranslation")
 	defer func(t time.Time) {
@@ -21,12 +21,14 @@ func (srv *server) handleAiTranslation() http.HandlerFunc {
 	}(time.Now())
 
 	// setup
-	var err error
-
+	var (
+		client *ai.Client
+	)
 	OPENAI_API_KEY := os.Getenv("OPENAI_API_KEY")
 	if OPENAI_API_KEY == "" {
 		l.Fatal("OPENAI_API_KEY not set")
 	}
+	client = ai.NewClient(OPENAI_API_KEY)
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -42,39 +44,65 @@ func (srv *server) handleAiTranslation() http.HandlerFunc {
 		// get form data
 		text := r.FormValue("text")
 		lang := r.FormValue("target_lang")
+		model := r.FormValue("model")
 
-		l.Debug("got form data", "formdata", r.Form)
-
-		if text == "" || lang == "" {
-			l.Info(
-				"bad request",
+		if text == "" || lang == "" || model == "" {
+			srv.respCode(http.StatusBadRequest, w, r)
+			l.Warn("Bad request. field empty",
 				"text", text,
 				"lang", lang,
+				"model", model,
 			)
-			srv.respCode(http.StatusBadRequest, w, r)
 			return
 		}
 
-		// translate
-		time.Sleep(4 * time.Second)
-		translation := ai.Translation{Prompt: "test prompt", Choices: []string{text, lang, "en blåval"}}
-		// translation, err := ai.Translate(OPENAI_API_KEY, lang, text)
-		// if err != nil {
-		// 	l.Error(
-		// 		"translate",
-		// 		"error", err,
-		// 	)
-		// 	srv.respCode(http.StatusInternalServerError, w, r)
-		// 	return
-		// }
+		if model != ai.GPT3Dot5Turbo && model != ai.GPT4 {
+			srv.respCode(http.StatusBadRequest, w, r)
+			l.Warn("recieved unhandled model field")
+			return
+		}
 
-		l.Debug("got translation", "translation", translation)
-
-		err = pages.Translated(translation).Render(r.Context(), w)
+		currentTranslation := pages.Translation{Prompt: text}
+		resp, err := client.CreateChatCompletion(
+			r.Context(),
+			ai.ChatCompletionRequest{
+				Model: model,
+				Messages: []ai.ChatCompletionMessage{
+					{
+						Role:    ai.ChatMessageRoleSystem,
+						Content: "I am a translation service. Give me a text to translate.",
+					},
+					{
+						Role:    ai.ChatMessageRoleUser,
+						Content: fmt.Sprintf("Translate the following text into %s: %s", lang, text),
+					},
+				},
+			},
+		)
 		if err != nil {
 			srv.respCode(http.StatusInternalServerError, w, r)
 			l.Error(
-				"render",
+				"openAI api error",
+				"error", err,
+			)
+			return
+		}
+
+		for _, c := range resp.Choices {
+			currentTranslation.Choices = append(currentTranslation.Choices, c.Message.Content)
+		}
+		srv.translations = prepend(srv.translations, currentTranslation)
+
+		// limit num of translations
+		for len(srv.translations) > 10 {
+			srv.translations = srv.translations[:10]
+		}
+
+		err = pages.Translated(srv.translations).Render(r.Context(), w)
+		if err != nil {
+			srv.respCode(http.StatusInternalServerError, w, r)
+			l.Error(
+				"render 'translation' page",
 				"error", err,
 			)
 			return
@@ -83,40 +111,14 @@ func (srv *server) handleAiTranslation() http.HandlerFunc {
 	}
 }
 
-func (srv *server) handleTestAI() http.HandlerFunc {
-	// timing and logging
-	l := srv.l.With("handler", "ApiTranslation")
-	defer func(t time.Time) {
-		l.Info(
-			"ready",
-			"time", time.Since(t),
-		)
-	}(time.Now())
 
-	// setup
+// HELPER
 
-	OPENAI_API_KEY := os.Getenv("OPENAI_API_KEY")
-	if OPENAI_API_KEY == "" {
-		l.Fatal("OPENAI_API_KEY not set")
-	}
-	chan, err := ai.TranslateStream(OPENAI_API_KEY, "Spanihs", "snakar du norsk torsk eller är du glad att se mig (sexual inuendo)?")
-	for cha  
-	}
-	if err != nil {
-		l.Fatal("test stream", "error", err)
-	}
+func prepend(slice []pages.Translation, item pages.Translation) []pages.Translation {
+	// TODO:rework this solution
+	slice = append(slice, pages.Translation{})
+	copy(slice[1:], slice)
+	slice[0] = item
+	return slice
 
-	// handler
-	return func(w http.ResponseWriter, r *http.Request) {
-		// timing and logging
-		l := srv.l.With("handler", "ApiTranslation")
-		defer func(t time.Time) {
-			l.Debug(
-				"responded",
-				"time", time.Since(t),
-			)
-		}(time.Now())
-
-		srv.respCode(http.StatusNotImplemented, w, r)
-	}
 }

@@ -1,12 +1,11 @@
 package pages
 
-import "fmt"
+import (
+    "fmt"
+    ai "github.com/sashabaranov/go-openai"
+)
 
-import ai "github.com/johan-st/openAI"
-
-
-
-templ OpenAI() {
+templ OpenAI(trans []Translation) {
     <div class="translation__form-container">
         <form class="translation__form"
                 hx-post="/ai/translate"
@@ -26,6 +25,12 @@ templ OpenAI() {
                     <option value="French">French</option>
                     <option value="Dutch">Dutch</option>
                     <option value="German">German</option>
+                </select>    
+
+                 <label for="model">language model:</label>    
+                <select id="model" name="model">
+                    <option value={ai.GPT3Dot5Turbo} selected>chatGTP 3.5 turbo (fast and almost as good)</option>
+                    <option value={ai.GPT4}>chatGPT 4 (slower but better)</option>
                 </select>     
                 <input class="button" type="submit" value="Translate" 
                     hx-disabled-elt="this"/>   
@@ -34,22 +39,28 @@ templ OpenAI() {
     </div>
 
     <div id="translation">
-        @Translated(ai.Translation{})
+        @Translated(trans)
     </div>
 
 }
 
-
-templ Translated(tran ai.Translation) {
+type Translation struct {
+    Prompt  string
+    Choices []string
+}
+templ Translated(trans []Translation) {
     @spinner("spinner")
-    <div class="translation__results">
-        <h3>Translated Text:</h3>
-        if len(tran.Choices) == 0{
-        <p>nothing yet...</p>
-        }
-        for i , c := range tran.Choices {
-            <h4>Choice {fmt.Sprintf("%d", i + 1)}</h4>
-            <p>{c}</p>
-        }
+        <div class="translation__results">
+        for i , tran := range trans {
+            <div class="translation__divider"></div>
+            <div class="translation__single">
+            <h2>Translation {fmt.Sprintf("%d", len(trans)-i)}</h2>
+                <p>Prompt was: {tran.Prompt}</p>
+                <h3>Translated Text:</h3>
+                if len(tran.Choices) == 0{
+                    <p>nothing yet...</p>
+                }<p>{tran.Choices[0]}</p>
+            </div>
+            }
     </div>
 }

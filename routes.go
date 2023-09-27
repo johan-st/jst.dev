@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -34,7 +35,8 @@ var (
 
 	// nav and footer links
 	navLinks = []pages.Link{
-		{Active: false, Url: "/ai", Text: "AI features", External: false},
+		{Active: false, Url: "/ai/translate", Text: "Translation", External: false},
+		{Active: false, Url: "/todos", Text: "ToDo", External: false},
 	}
 	footerLinks = []pages.Link{
 		{Active: false, Url: "https://www.dpj.se", Text: "Live site", External: true},
@@ -45,6 +47,9 @@ var (
 type server struct {
 	l      *log.Logger
 	router *way.Router
+
+	// persistence
+	translations []pages.Translation
 }
 
 func newRouter(l *log.Logger) server {
@@ -62,20 +67,18 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/static", srv.handleNotFound())
 	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("/static/", "content/static"))
 
-	// PAGES
-	srv.router.HandleFunc("GET", "/:page", srv.handleTempl())
+	// GET
+	srv.router.HandleFunc("GET", "...", srv.handlePage())
+	
+	// POST
+	srv.router.HandleFunc("POST", "/ai", srv.handleAiTranslationPost())
+	srv.router.HandleFunc("POST", "/ai/translate", srv.handleAiTranslationPost())
+	srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
 	// h.router.HandleFunc("GET", "/admin/:page", h.handleAdminTempl())
 	// h.router.HandleFunc("GET", "/admin/images/:id", h.handleAdminImage())
-	
-	// AI
-	srv.router.HandleFunc("POST", "/ai/translate", srv.handleAiTranslation())
-	srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
 
 	// 404
 	srv.router.NotFound = srv.handleNotFound()
-
-	srv.handleTestAI()
-	
 }
 
 // HANDLERS
@@ -98,10 +101,10 @@ func (srv *server) handleAiStories() http.HandlerFunc {
 	}
 }
 
-// handleTempl serves a template.
-func (srv *server) handleTempl() http.HandlerFunc {
+// handlePage serves a pages from templates.
+func (srv *server) handlePage() http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "StaticDir")
+	l := srv.l.With("handler", "root-pages")
 	defer func(t time.Time) {
 		l.Info(
 			"ready",
@@ -133,20 +136,32 @@ func (srv *server) handleTempl() http.HandlerFunc {
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
+		// time and log
 		defer func(t time.Time) {
-			l.Debug("serving admin page",
-				"time", time.Since(t),
-				"path", r.URL.Path)
+			l.Debug("serving page",
+			"time", time.Since(t),
+			"path", r.URL.Path,
+		)
 		}(time.Now())
 
-		var content templ.Component
-		page := way.Param(r.Context(), "page")
+		// uri
+		reqUri , err := url.ParseRequestURI(r.URL.Path)
+		normalizedPath := reqUri.EscapedPath()
+		if err != nil {
+			l.Error("Could not normalize path. using raw path", "error", err)
+			normalizedPath = r.URL.Path
+		}
+		if normalizedPath != r.URL.Path {
+			l.Warn("Normalized path", "from", r.URL.Path, "to", normalizedPath)
+		}
 
-		switch page {
+		var content templ.Component
+
+		switch normalizedPath {
 		case "":
 			content = pages.Landing(availablePosts)
-		case "ai":
-			content = pages.OpenAI()
+		case "/ai/translate":
+			content = pages.OpenAI(srv.translations)
 		default:
 			file, err := os.ReadFile("_docs/thoughts.md")
 			if err != nil {
