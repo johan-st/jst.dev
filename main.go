@@ -14,7 +14,7 @@ func main() {
 	logger.SetPrefix("main")
 	logger.SetReportTimestamp(true)
 	logger.SetLevel(log.DebugLevel)
-	// logger.SetReportCaller(true)
+	logger.SetReportCaller(true)
 
 	router := newRouter(logger)
 	router.prepareRoutes()
