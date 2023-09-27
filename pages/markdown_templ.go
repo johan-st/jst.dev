@@ -9,7 +9,7 @@ import "context"
 import "io"
 import "bytes"
 
-func MarkdownFile(file []byte) templ.Component {
+func MarkdownPost(post Post) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {
@@ -22,11 +22,28 @@ func MarkdownFile(file []byte) templ.Component {
 			var_1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, err = templBuffer.WriteString("<div>")
+		_, err = templBuffer.WriteString("<h1>")
 		if err != nil {
 			return err
 		}
-		err = markdownFile(file).Render(ctx, templBuffer)
+		var var_2 string = post.Title
+		_, err = templBuffer.WriteString(templ.EscapeString(var_2))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</h1><div class=\"markdown-container content\" id=\"")
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString(templ.EscapeString("md_" + post.Path))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("\">")
+		if err != nil {
+			return err
+		}
+		err = post.Render(ctx, templBuffer)
 		if err != nil {
 			return err
 		}

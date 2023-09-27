@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"net/url"
-	"os"
 	"time"
 
 	"github.com/a-h/templ"
@@ -18,7 +16,8 @@ import (
 //go:embed content
 var embededFileSystem embed.FS
 var (
-	darkTheme = pages.Theme{
+	globalTitle = "dpj-docs"
+	darkTheme   = pages.Theme{
 		ColorPrimary:    "#f90",
 		ColorSecondary:  "#fa3",
 		ColorBackground: "#333",
@@ -37,6 +36,7 @@ var (
 	navLinks = []pages.Link{
 		{Active: false, Url: "/ai/translate", Text: "Translation", External: false},
 		{Active: false, Url: "/todos", Text: "ToDo", External: false},
+		{Active: false, Url: "/", Text: "Docs", External: false},
 	}
 	footerLinks = []pages.Link{
 		{Active: false, Url: "https://www.dpj.se", Text: "Live site", External: true},
@@ -49,7 +49,8 @@ type server struct {
 	router *way.Router
 
 	// persistence
-	translations []pages.Translation
+	translations  []pages.Translation
+	availableDocs []pages.Post
 }
 
 func newRouter(l *log.Logger) server {
@@ -68,8 +69,9 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("/static/", "content/static"))
 
 	// GET
+	srv.router.HandleFunc("GET", "/docs/", srv.handleMarkdown("content/docs"))
 	srv.router.HandleFunc("GET", "...", srv.handlePage())
-	
+
 	// POST
 	srv.router.HandleFunc("POST", "/ai", srv.handleAiTranslationPost())
 	srv.router.HandleFunc("POST", "/ai/translate", srv.handleAiTranslationPost())
@@ -101,10 +103,12 @@ func (srv *server) handleAiStories() http.HandlerFunc {
 	}
 }
 
-// handlePage serves a pages from templates.
-func (srv *server) handlePage() http.HandlerFunc {
+// handleMarkdown serves a pages from templates.
+// NOTE: dirRoot can not end with a slash.
+// NOTE: dirRoot is relative to the embeded filesystem.
+func (srv *server) handleMarkdown(dirRoot string) http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "root-pages")
+	l := srv.l.With("handler", "markdown")
 	defer func(t time.Time) {
 		l.Info(
 			"ready",
@@ -114,7 +118,7 @@ func (srv *server) handlePage() http.HandlerFunc {
 
 	// setup
 	// get base css styles
-	styles, err := os.ReadFile("pages/assets/inline.css")
+	styles, err := fs.ReadFile(embededFileSystem, "content/assets/inline.css")
 	if err != nil {
 		l.Fatal("Could not read main.css", "error", err)
 	}
@@ -125,50 +129,116 @@ func (srv *server) handlePage() http.HandlerFunc {
 	}
 
 	data := pages.MainData{
-		DocTitle:      "local_test",
+		DocTitle:      globalTitle,
 		TopNav:        navLinks,
 		FooterLinks:   footerLinks,
 		Metadata:      metadata,
 		ThemeStyleTag: baseStyles,
 	}
 
-	availablePosts := srv.getAvailablePosts("content/blog")
+	localFS, err := fs.Sub(embededFileSystem, dirRoot)
+	if err != nil {
+		l.Fatal("load filesystem", "error", err)
+	}
+	srv.availableDocs, err = getAvailablePosts(localFS)
+	if err != nil {
+		l.Fatal("Could not get available posts", "error", err)
+	}
+
+	// handler
+	return func(w http.ResponseWriter, r *http.Request) {
+		// time and log
+
+		defer func(t time.Time) {
+			l.Debug("serving page",
+				"time", time.Since(t),
+				"path", r.URL.Path,
+			)
+		}(time.Now())
+
+		var content templ.Component
+
+		for _, p := range srv.availableDocs {
+			l.Debug("checking path", "path", p.Path, "url", r.URL.Path)
+			if p.Path == r.URL.Path {
+				content = pages.MarkdownPost(p)
+				break
+			}
+		}
+		if content == nil {
+			srv.respCode(http.StatusNotFound, w, r)
+			return
+		}
+
+		layout := pages.Layout(data, content)
+		err = layout.Render(r.Context(), w)
+		if err != nil {
+			l.Error("Could not render template", "error", err)
+			srv.respCode(http.StatusInternalServerError, w, r)
+		}
+	}
+}
+
+// handlePage serves a pages from templates.
+func (srv *server) handlePage() http.HandlerFunc {
+	// timing and logging
+	l := srv.l.With("handler", "pages")
+	defer func(t time.Time) {
+		l.Info(
+			"ready",
+			"time", time.Since(t),
+		)
+	}(time.Now())
+
+	// setup
+	// get base css styles
+	styles, err := fs.ReadFile(embededFileSystem, "content/assets/inline.css")
+	if err != nil {
+		l.Fatal("Could not read main.css", "error", err)
+	}
+
+	baseStyles, err := pages.StyleTag(darkTheme, string(styles))
+	if err != nil {
+		l.Fatal("Could not create style tag", "error", err)
+	}
+
+	data := pages.MainData{
+		DocTitle:      globalTitle,
+		TopNav:        navLinks,
+		FooterLinks:   footerLinks,
+		Metadata:      metadata,
+		ThemeStyleTag: baseStyles,
+	}
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		// time and log
 		defer func(t time.Time) {
 			l.Debug("serving page",
-			"time", time.Since(t),
-			"path", r.URL.Path,
-		)
+				"time", time.Since(t),
+				"path", r.URL.Path,
+			)
 		}(time.Now())
 
 		// uri
-		reqUri , err := url.ParseRequestURI(r.URL.Path)
-		normalizedPath := reqUri.EscapedPath()
-		if err != nil {
-			l.Error("Could not normalize path. using raw path", "error", err)
-			normalizedPath = r.URL.Path
-		}
-		if normalizedPath != r.URL.Path {
-			l.Warn("Normalized path", "from", r.URL.Path, "to", normalizedPath)
-		}
 
 		var content templ.Component
 
-		switch normalizedPath {
-		case "":
-			content = pages.Landing(availablePosts)
+		switch r.URL.Path {
+		case "/":
+			content = pages.Landing(&srv.availableDocs)
 		case "/ai/translate":
 			content = pages.OpenAI(srv.translations)
 		default:
-			file, err := os.ReadFile("_docs/thoughts.md")
+			file, err := fs.ReadFile(embededFileSystem, "content/docs/todo.md")
 			if err != nil {
-				l.Error("Could not read _docs/thoughts.md", "error", err)
+				l.Error("Could not read 'content/docs/todo.md'", "error", err)
 			}
-
-			content = pages.MarkdownFile(file)
+			post, err := pages.FileToPost(file, "")
+			if err != nil {
+				l.Error("Could not convert file to post", "error", err)
+			}
+			content = pages.MarkdownPost(post)
 		}
 
 		layout := pages.Layout(data, content)
@@ -230,7 +300,7 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 	}(time.Now())
 
 	// setup
-	file, err := os.ReadFile(path)
+	file, err := fs.ReadFile(embededFileSystem, path)
 	if err != nil {
 		l.Fatal(
 			"load file",
@@ -286,15 +356,37 @@ func (srv *server) Handler() http.Handler {
 
 // HELPERS
 
-func (srv *server) getAvailablePosts(dir string) []pages.Post {
-	// get all files in dir
-	_, err := os.ReadDir(dir)
-	if err != nil {
-		srv.l.Error("read dir", "err", err)
-	}
+func getAvailablePosts(filesystem fs.FS) ([]pages.Post, error) {
+	var (
+		paths []string
+		posts []pages.Post
+	)
 
-	return []pages.Post{
-		{Title: "test for the one", Slug: "testslug"},
-		{Title: "test 2 the moon", Slug: "testslug-2"},
+	fs.WalkDir(filesystem, ".", addToList(&paths))
+	for _, p := range paths {
+		file, err := fs.ReadFile(filesystem, p)
+		if err != nil {
+			return nil, err
+		}
+
+		post, err := pages.FileToPost(file, "docs")
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+	return posts, nil
+}
+
+func addToList(list *[]string) fs.WalkDirFunc {
+	return func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		if !d.IsDir() {
+			*list = append(*list, path)
+		}
+		return nil
 	}
 }

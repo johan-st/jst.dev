@@ -6,7 +6,10 @@ require (
 	github.com/a-h/templ v0.2.334
 	github.com/charmbracelet/log v0.2.4
 	github.com/sashabaranov/go-openai v1.15.3
+	github.com/yuin/goldmark-meta v1.1.0
 )
+
+require gopkg.in/yaml.v2 v2.3.0 // indirect
 
 require (
 	github.com/alecthomas/chroma v0.10.0 // indirect

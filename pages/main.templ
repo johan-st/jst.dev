@@ -36,7 +36,7 @@ templ Layout(d MainData, content templ.Component ){
 templ header(navLinks []Link) {
     <header>
         <div class="logo">
-            <h1><a href="/">docs</a></h1>
+            <h1><a hx-boost="true" href="/">home</a></h1>
         </div>
         @nav(navLinks)
     </header>
@@ -45,7 +45,7 @@ templ header(navLinks []Link) {
 
 
 templ nav(links []Link){
-    <nav>
+    <nav hx-boost="true">
         for _, l := range links {
             @link(l)
         }

@@ -112,11 +112,11 @@ func header(navLinks []Link) templ.Component {
 			var_4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, err = templBuffer.WriteString("<header><div class=\"logo\"><h1><a href=\"/\">")
+		_, err = templBuffer.WriteString("<header><div class=\"logo\"><h1><a hx-boost=\"true\" href=\"/\">")
 		if err != nil {
 			return err
 		}
-		var_5 := `docs`
+		var_5 := `home`
 		_, err = templBuffer.WriteString(var_5)
 		if err != nil {
 			return err
@@ -153,7 +153,7 @@ func nav(links []Link) templ.Component {
 			var_6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, err = templBuffer.WriteString("<nav>")
+		_, err = templBuffer.WriteString("<nav hx-boost=\"true\">")
 		if err != nil {
 			return err
 		}
