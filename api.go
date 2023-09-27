@@ -12,11 +12,13 @@ import (
 
 func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "ApiTranslation")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix() + ".ApiTranslationPost")
+
 	defer func(t time.Time) {
-		l.Info(
+		l.Debug(
 			"ready",
-			"time", time.Since(t),
+			"time_elapsed", time.Since(t),
 		)
 	}(time.Now())
 
@@ -36,8 +38,8 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 		l := srv.l.With("handler", "ApiTranslation")
 		defer func(t time.Time) {
 			l.Debug(
-				"responded",
-				"time", time.Since(t),
+				"respond",
+				"time_elapsed", time.Since(t),
 			)
 		}(time.Now())
 
@@ -110,7 +112,6 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 
 	}
 }
-
 
 // HELPER
 

@@ -2,7 +2,7 @@ package pages
 
 templ MarkdownPost(post Post) {
     <h1>{post.Title}</h1>
-    <div class="markdown-container content" id={"md_"+post.Path}> 
+    <div class="markdown-container content" id={"md_"+post.Slug}> 
         {! post }
     </div>	
 }

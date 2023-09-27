@@ -136,3 +136,13 @@ input {
   width: 6rem;
   height: 6rem;
 }
+footer {
+  text-align: center;
+  margin-left: 0;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}

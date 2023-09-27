@@ -35,7 +35,7 @@ func MarkdownPost(post Post) templ.Component {
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString(templ.EscapeString("md_" + post.Path))
+		_, err = templBuffer.WriteString(templ.EscapeString("md_" + post.Slug))
 		if err != nil {
 			return err
 		}

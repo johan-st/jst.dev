@@ -9,9 +9,7 @@ import (
 
 	"github.com/a-h/templ"
 	log "github.com/charmbracelet/log"
-
-	// "github.com/johan-st/jst.dev/pages"
-	pages "github.com/johan-st/jst.dev/pages/generated"
+	"github.com/johan-st/jst.dev/pages"
 	"github.com/matryer/way"
 )
 
@@ -56,6 +54,7 @@ type server struct {
 }
 
 func newRouter(l *log.Logger) server {
+	l = l.WithPrefix(l.GetPrefix() + ".router")
 	return server{
 		l:      l,
 		router: way.NewRouter(),
@@ -68,7 +67,8 @@ func (srv *server) prepareRoutes() {
 	// STATIC ASSETS
 	srv.router.HandleFunc("GET", "/favicon.ico", srv.handleStaticFile("content/static/favicon.ico"))
 	srv.router.HandleFunc("GET", "/static", srv.handleNotFound())
-	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("/static/", "content/static"))
+	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("content/static", "/static/"))
+	// srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("content/static", "static"))
 
 	// GET
 	srv.router.HandleFunc("GET", "/docs", srv.handleRedirect(http.StatusTemporaryRedirect, "/"))
@@ -78,8 +78,6 @@ func (srv *server) prepareRoutes() {
 	// POST
 	srv.router.HandleFunc("POST", "/ai/translate", srv.handleApiTranslationPost())
 	srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
-	// h.router.HandleFunc("GET", "/admin/:page", h.handleAdminTempl())
-	// h.router.HandleFunc("GET", "/admin/images/:id", h.handleAdminImage())
 
 	// 404
 	srv.router.NotFound = srv.handleNotFound()
@@ -89,11 +87,13 @@ func (srv *server) prepareRoutes() {
 
 func (srv *server) handleAiStories() http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "ApiAiStories")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix() + ".AiStories")
+
 	defer func(t time.Time) {
 		l.Debug(
-			"ready and waiting...",
-			"time", time.Since(t),
+			"ready",
+			"elapsed_time", time.Since(t),
 		)
 	}(time.Now())
 
@@ -108,13 +108,19 @@ func (srv *server) handleAiStories() http.HandlerFunc {
 // handleMarkdown serves a pages from templates.
 // NOTE: dirRoot can not end with a slash.
 // NOTE: dirRoot is relative to the embeded filesystem.
-func (srv *server) handleMarkdown(dirRoot, basePath string) http.HandlerFunc {
+func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "markdown")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix()+".Markdown").
+		With(
+			"root dir", rootDir,
+			"base url path", basePath,
+		)
+
 	defer func(t time.Time) {
-		l.Info(
+		l.Debug(
 			"ready",
-			"time", time.Since(t),
+			"elapsed_time", time.Since(t),
 		)
 	}(time.Now())
 
@@ -138,7 +144,7 @@ func (srv *server) handleMarkdown(dirRoot, basePath string) http.HandlerFunc {
 		ThemeStyleTag: baseStyles,
 	}
 
-	markdownFS, err := fs.Sub(embededFileSystem, dirRoot)
+	markdownFS, err := fs.Sub(embededFileSystem, rootDir)
 	if err != nil {
 		l.Fatal("load filesystem", "error", err)
 	}
@@ -153,7 +159,7 @@ func (srv *server) handleMarkdown(dirRoot, basePath string) http.HandlerFunc {
 
 		defer func(t time.Time) {
 			l.Debug("serving page",
-				"time", time.Since(t),
+				"elapsed_time", time.Since(t),
 				"path", r.URL.Path,
 			)
 		}(time.Now())
@@ -184,11 +190,13 @@ func (srv *server) handleMarkdown(dirRoot, basePath string) http.HandlerFunc {
 // handlePage serves a pages from templates.
 func (srv *server) handlePage() http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "pages")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix() + ".Page")
+
 	defer func(t time.Time) {
-		l.Info(
+		l.Debug(
 			"ready",
-			"time", time.Since(t),
+			"elapsed_time", time.Since(t),
 		)
 	}(time.Now())
 
@@ -217,7 +225,7 @@ func (srv *server) handlePage() http.HandlerFunc {
 		// time and log
 		defer func(t time.Time) {
 			l.Debug("serving page",
-				"time", time.Since(t),
+				"elapsed_time", time.Since(t),
 				"path", r.URL.Path,
 			)
 		}(time.Now())
@@ -253,20 +261,24 @@ func (srv *server) handlePage() http.HandlerFunc {
 	}
 }
 
-func (srv *server) handleStaticDir(urlRoot, dirRoot string) http.HandlerFunc {
+func (srv *server) handleStaticDir(rootDir,basePath string) http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "StaticDir")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix()+".StaticDir").
+		With(
+			"root_dir", rootDir,
+			"base_url", basePath,
+		)	
+		
 	defer func(t time.Time) {
-		l.Info(
+		l.Debug(
 			"ready",
-			"urlRoot", urlRoot,
-			"dirRoot", dirRoot,
-			"time", time.Since(t),
+			"elapsed_time", time.Since(t),
 		)
 	}(time.Now())
 
 	// setup
-	subFs, err := fs.Sub(embededFileSystem, dirRoot)
+	subFs, err := fs.Sub(embededFileSystem, rootDir)
 	if err != nil {
 		l.Fatal(
 			"load filesystem",
@@ -282,10 +294,10 @@ func (srv *server) handleStaticDir(urlRoot, dirRoot string) http.HandlerFunc {
 			l.Info(
 				"serve file",
 				"path", r.URL.Path,
-				"time", time.Since(t),
+				"elapsed_time", time.Since(t),
 			)
 		}(time.Now())
-		r.URL.Path = r.URL.Path[len(urlRoot)-1:]
+		r.URL.Path = r.URL.Path[len(basePath)-1:]
 		fileSrv.ServeHTTP(w, r)
 	}
 }
@@ -293,11 +305,14 @@ func (srv *server) handleStaticDir(urlRoot, dirRoot string) http.HandlerFunc {
 // handleStaticFile serves a predtermined static file.
 func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "StaticFile")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix()+".StaticFile").
+		With("file", path)
+
 	defer func(t time.Time) {
-		l.Info(
+		l.Debug(
 			"ready",
-			"time", time.Since(t),
+			"elapsed_time", time.Since(t),
 		)
 	}(time.Now())
 
@@ -317,7 +332,7 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 			srv.respCode(http.StatusInternalServerError, w, r)
 			l.Error(
 				"serve file",
-				"path", path,
+				"error", err,
 			)
 		}
 	}
@@ -325,11 +340,17 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 
 func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "Redirect")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix()+".Redirect").
+		With(
+			"code", code,
+			"target_url", url,
+		)
+
 	defer func(t time.Time) {
-		l.Info(
+		l.Debug(
 			"ready",
-			"time", time.Since(t),
+			"elapsed_time", time.Since(t),
 		)
 	}(time.Now())
 
@@ -342,9 +363,7 @@ func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		l.Debug(
 			"redirecting",
-			"code", code,
 			"from", r.URL.Path,
-			"to", url,
 		)
 		http.Redirect(w, r, url, code)
 	}
@@ -352,11 +371,13 @@ func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
 
 func (srv *server) handleNotFound() http.HandlerFunc {
 	// timing and logging
-	l := srv.l.With("handler", "NotFound")
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix()+".NotFound")
+
 	defer func(t time.Time) {
-		l.Info(
+		l.Debug(
 			"ready",
-			"time", time.Since(t),
+			"time_elapsed", time.Since(t),
 		)
 	}(time.Now())
 
@@ -364,6 +385,7 @@ func (srv *server) handleNotFound() http.HandlerFunc {
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
+		l.Debug("responding", "referer", r.Header.Values("referer"))
 		srv.respCode(http.StatusNotFound, w, r)
 	}
 

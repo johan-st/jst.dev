@@ -1,34 +1,50 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/charmbracelet/log"
 )
 
 func main() {
+	startTime := time.Now()
+
+	flagVerbose := flag.Bool("v", false, "Printing all log levels")
+	flagDev := flag.Bool("dev", false, "loggs include caller")
+	flag.Parse()
 
 	logger := log.New(os.Stderr)
 	logger.SetPrefix("main")
 	logger.SetReportTimestamp(true)
-	logger.SetLevel(log.DebugLevel)
-	logger.SetReportCaller(true)
 
-	router := newRouter(logger)
+	if *flagVerbose {
+		logger.SetLevel(log.DebugLevel)
+	}
+	if *flagDev {
+		logger.SetReportCaller(true)
+	}
+	
+	l := logger.WithPrefix(logger.GetPrefix() + ".http")
+	router := newRouter(l)
 	router.prepareRoutes()
 
-	log.Fatal(runServer(&router))
+	logger.Info(
+		"startup complete, handing over to http server",
+		"time", time.Since(startTime),
+	)
+	
+	logger.Fatal(l, runServer(l,&router))
 }
 
-func runServer(s *server) error {
-	l := s.l.WithPrefix("http")
+func runServer(l *log.Logger, s *server) error {
 
 	pageSrv := http.Server{
 		Addr:    ":8080",
 		Handler: s.Handler(),
-		
 	}
 
 	l.Info("Starting server", "addr", pageSrv.Addr)

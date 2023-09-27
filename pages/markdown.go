@@ -20,13 +20,13 @@ var (
 	once sync.Once
 )
 
-type Metadata map[string]interface{}
+type PostMeta map[string]interface{}
 
 type Post struct {
 	Title string
 	Body  []byte
 	Slug  string
-	Metadata
+	PostMeta
 }
 
 func (p Post) Render(ctx context.Context, w io.Writer) error {
@@ -105,6 +105,6 @@ func FileToPost(file []byte, basePath string) (Post, error) {
 		Title:    title.(string), // we checked
 		Body:     buf.Bytes(),
 		Slug:     basePath + slug.(string), // we checked
-		Metadata: metaData,
+		PostMeta: metaData,
 	}, nil
 }
