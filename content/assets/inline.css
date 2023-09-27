@@ -81,7 +81,7 @@ header>nav {
   align-items: center;
 }
 
-main {
+main>div:first-of-type {
   border: 1px solid var(--clr-border);
   border-radius: var(--border-radius);
   padding: 1rem 2rem;

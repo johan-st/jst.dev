@@ -9,12 +9,7 @@ import "context"
 import "io"
 import "bytes"
 
-type Post struct {
-	Title string
-	Slug  string
-}
-
-func Landing(posts []Post) templ.Component {
+func Landing(posts *[]Post) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {
@@ -27,25 +22,25 @@ func Landing(posts []Post) templ.Component {
 			var_1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, err = templBuffer.WriteString("<div><h2>")
+		_, err = templBuffer.WriteString("<h1>")
 		if err != nil {
 			return err
 		}
-		var_2 := `Available`
+		var_2 := `Docs`
 		_, err = templBuffer.WriteString(var_2)
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString("</h2><ul>")
+		_, err = templBuffer.WriteString("</h1><div><ul hx-boost=\"true\">")
 		if err != nil {
 			return err
 		}
-		for _, post := range posts {
+		for _, post := range *posts {
 			_, err = templBuffer.WriteString("<li><a href=\"")
 			if err != nil {
 				return err
 			}
-			var var_3 templ.SafeURL = templ.SafeURL(post.Slug)
+			var var_3 templ.SafeURL = templ.SafeURL(post.Path)
 			_, err = templBuffer.WriteString(templ.EscapeString(string(var_3)))
 			if err != nil {
 				return err

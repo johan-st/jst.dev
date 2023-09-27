@@ -1,5 +1,8 @@
 package pages
 
-templ MarkdownFile(file []byte) {
-    <div> {! markdownFile(file) }</div>	
+templ MarkdownPost(post Post) {
+    <h1>{post.Title}</h1>
+    <div class="markdown-container content" id={"md_"+post.Path}> 
+        {! post }
+    </div>	
 }

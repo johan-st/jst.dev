@@ -1,16 +1,11 @@
 package pages
 
-type Post struct {
-    Title string
-    Slug string
-}
-
-templ Landing(posts []Post) {
+templ Landing(posts *[]Post) {
+<h1>Docs</h1>
 <div> 
-    <h2>Available</h2>
-    <ul>
-        for _, post := range posts {
-            <li><a href={templ.SafeURL(post.Slug)}>{post.Title}</a></li>
+    <ul hx-boost="true">
+        for _, post := range *posts {
+            <li><a href={templ.SafeURL(post.Path)}>{post.Title}</a></li>
         }
     </ul>
 </div>
