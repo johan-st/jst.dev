@@ -25,7 +25,7 @@ type Metadata map[string]interface{}
 type Post struct {
 	Title string
 	Body  []byte
-	Path  string
+	Slug  string
 	Metadata
 }
 
@@ -80,27 +80,23 @@ func FileToPost(file []byte, basePath string) (Post, error) {
 		return Post{}, fmt.Errorf("title is not a string. file starts %s", file[:60])
 	}
 
-	path, ok := metaData["path"]
+	slug, ok := metaData["path"]
 	if !ok {
 		return Post{}, fmt.Errorf("no path found on post. file starts %s", file[:60])
 	}
-	switch path.(type) {
+	switch slug.(type) {
 	case string:
 	default:
 		return Post{}, fmt.Errorf("path is not a string. file starts %s", file[:60])
 	}
 
 	// make sure we DON'T have a trailing slash
-	if path.(string) == "/" {
-		path = ""
+	if slug.(string) == "/" {
+		slug = ""
 	}
-	if path.(string)[len(path.(string))-1] == '/' {
-		path = path.(string)[:len(path.(string))-1]
+	if slug.(string)[len(slug.(string))-1] == '/' {
+		slug = slug.(string)[:len(slug.(string))-1]
 	}
-
-	// fmt.Println("path", path.(string))
-	// fmt.Println("basePath", basePath)
-	// fmt.Println("combined path", basePath+path.(string))
 
 	buf := &bytes.Buffer{}
 	md.Convert(file, buf)
@@ -108,7 +104,7 @@ func FileToPost(file []byte, basePath string) (Post, error) {
 	return Post{
 		Title:    title.(string), // we checked
 		Body:     buf.Bytes(),
-		Path:     basePath + path.(string), // we checked
+		Slug:     basePath + slug.(string), // we checked
 		Metadata: metaData,
 	}, nil
 }

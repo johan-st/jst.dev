@@ -9,7 +9,9 @@ import (
 
 	"github.com/a-h/templ"
 	log "github.com/charmbracelet/log"
-	"github.com/johan-st/jst.dev/pages"
+
+	// "github.com/johan-st/jst.dev/pages"
+	pages "github.com/johan-st/jst.dev/pages/generated"
 	"github.com/matryer/way"
 )
 
@@ -69,12 +71,12 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("/static/", "content/static"))
 
 	// GET
-	srv.router.HandleFunc("GET", "/docs/", srv.handleMarkdown("content/docs"))
-	srv.router.HandleFunc("GET", "...", srv.handlePage())
+	srv.router.HandleFunc("GET", "/docs", srv.handleRedirect(http.StatusTemporaryRedirect, "/"))
+	srv.router.HandleFunc("GET", "/docs/", srv.handleMarkdown("content/docs", "docs"))
+	srv.router.HandleFunc("GET", "...", srv.handlePage()) // catch all
 
 	// POST
-	srv.router.HandleFunc("POST", "/ai", srv.handleAiTranslationPost())
-	srv.router.HandleFunc("POST", "/ai/translate", srv.handleAiTranslationPost())
+	srv.router.HandleFunc("POST", "/ai/translate", srv.handleApiTranslationPost())
 	srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
 	// h.router.HandleFunc("GET", "/admin/:page", h.handleAdminTempl())
 	// h.router.HandleFunc("GET", "/admin/images/:id", h.handleAdminImage())
@@ -106,7 +108,7 @@ func (srv *server) handleAiStories() http.HandlerFunc {
 // handleMarkdown serves a pages from templates.
 // NOTE: dirRoot can not end with a slash.
 // NOTE: dirRoot is relative to the embeded filesystem.
-func (srv *server) handleMarkdown(dirRoot string) http.HandlerFunc {
+func (srv *server) handleMarkdown(dirRoot, basePath string) http.HandlerFunc {
 	// timing and logging
 	l := srv.l.With("handler", "markdown")
 	defer func(t time.Time) {
@@ -136,11 +138,11 @@ func (srv *server) handleMarkdown(dirRoot string) http.HandlerFunc {
 		ThemeStyleTag: baseStyles,
 	}
 
-	localFS, err := fs.Sub(embededFileSystem, dirRoot)
+	markdownFS, err := fs.Sub(embededFileSystem, dirRoot)
 	if err != nil {
 		l.Fatal("load filesystem", "error", err)
 	}
-	srv.availableDocs, err = getAvailablePosts(localFS)
+	srv.availableDocs, err = getAvailablePosts(markdownFS, basePath)
 	if err != nil {
 		l.Fatal("Could not get available posts", "error", err)
 	}
@@ -159,8 +161,8 @@ func (srv *server) handleMarkdown(dirRoot string) http.HandlerFunc {
 		var content templ.Component
 
 		for _, p := range srv.availableDocs {
-			l.Debug("checking path", "path", p.Path, "url", r.URL.Path)
-			if p.Path == r.URL.Path {
+			l.Debug("checking path", "path", p.Slug, "url", r.URL.Path)
+			if p.Slug == r.URL.Path {
 				content = pages.MarkdownPost(p)
 				break
 			}
@@ -226,7 +228,7 @@ func (srv *server) handlePage() http.HandlerFunc {
 
 		switch r.URL.Path {
 		case "/":
-			content = pages.Landing(&srv.availableDocs)
+			content = pages.Blog(&srv.availableDocs)
 		case "/ai/translate":
 			content = pages.OpenAI(srv.translations)
 		default:
@@ -321,7 +323,33 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 	}
 }
 
-// handleStaticFile serves a predtermined static file.
+func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
+	// timing and logging
+	l := srv.l.With("handler", "Redirect")
+	defer func(t time.Time) {
+		l.Info(
+			"ready",
+			"time", time.Since(t),
+		)
+	}(time.Now())
+
+	// setup
+	if code < 300 || code > 399 {
+		l.Fatal("invalid redirect code", "code", code, "valid range", "300-399")
+	}
+
+	// handler
+	return func(w http.ResponseWriter, r *http.Request) {
+		l.Debug(
+			"redirecting",
+			"code", code,
+			"from", r.URL.Path,
+			"to", url,
+		)
+		http.Redirect(w, r, url, code)
+	}
+}
+
 func (srv *server) handleNotFound() http.HandlerFunc {
 	// timing and logging
 	l := srv.l.With("handler", "NotFound")
@@ -356,7 +384,7 @@ func (srv *server) Handler() http.Handler {
 
 // HELPERS
 
-func getAvailablePosts(filesystem fs.FS) ([]pages.Post, error) {
+func getAvailablePosts(filesystem fs.FS, basePath string) ([]pages.Post, error) {
 	var (
 		paths []string
 		posts []pages.Post
@@ -369,7 +397,7 @@ func getAvailablePosts(filesystem fs.FS) ([]pages.Post, error) {
 			return nil, err
 		}
 
-		post, err := pages.FileToPost(file, "docs")
+		post, err := pages.FileToPost(file, basePath)
 		if err != nil {
 			return nil, err
 		}

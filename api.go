@@ -10,7 +10,7 @@ import (
 	ai "github.com/sashabaranov/go-openai"
 )
 
-func (srv *server) handleAiTranslationPost() http.HandlerFunc {
+func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 	// timing and logging
 	l := srv.l.With("handler", "ApiTranslation")
 	defer func(t time.Time) {
