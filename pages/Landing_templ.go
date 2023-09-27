@@ -9,7 +9,12 @@ import "context"
 import "io"
 import "bytes"
 
-func Landing() templ.Component {
+type Post struct {
+	Title string
+	Slug  string
+}
+
+func Landing(posts []Post) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {
@@ -26,21 +31,40 @@ func Landing() templ.Component {
 		if err != nil {
 			return err
 		}
-		var_2 := `landing`
+		var_2 := `Available`
 		_, err = templBuffer.WriteString(var_2)
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString("</h2><p>")
+		_, err = templBuffer.WriteString("</h2><ul>")
 		if err != nil {
 			return err
 		}
-		var_3 := `lorem ipsum `
-		_, err = templBuffer.WriteString(var_3)
-		if err != nil {
-			return err
+		for _, post := range posts {
+			_, err = templBuffer.WriteString("<li><a href=\"")
+			if err != nil {
+				return err
+			}
+			var var_3 templ.SafeURL = templ.SafeURL(post.Slug)
+			_, err = templBuffer.WriteString(templ.EscapeString(string(var_3)))
+			if err != nil {
+				return err
+			}
+			_, err = templBuffer.WriteString("\">")
+			if err != nil {
+				return err
+			}
+			var var_4 string = post.Title
+			_, err = templBuffer.WriteString(templ.EscapeString(var_4))
+			if err != nil {
+				return err
+			}
+			_, err = templBuffer.WriteString("</a></li>")
+			if err != nil {
+				return err
+			}
 		}
-		_, err = templBuffer.WriteString("</p></div>")
+		_, err = templBuffer.WriteString("</ul></div>")
 		if err != nil {
 			return err
 		}

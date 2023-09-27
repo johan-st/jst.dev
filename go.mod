@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/a-h/templ v0.2.334
 	github.com/charmbracelet/log v0.2.4
-	github.com/johan-st/go-image-server v0.0.0-20230920122740-c1b5b8d49f9c
+	github.com/johan-st/openAI v0.0.0-20230926222515-af9346d3c639
 )
 
 require (

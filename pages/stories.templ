@@ -1,0 +1,51 @@
+package pages
+
+type BlogPost struct{
+    Title string
+    Author string
+    Excerpt string
+    Glob string
+    Full string
+}
+
+templ AiStories(posts []BlogPost){
+<style>
+    main>h1{
+        font-size: 3em;
+        text-align: center;
+    }
+    main>section{
+        border: 1px solid --var(--clr-border);
+        padding: 1em;
+        margin: 1em;
+        border-radius: var(--border-radius);
+    }
+    .post-full {
+        display: none;
+    }
+    .read-more {
+        cursor: pointer;
+        color: blue;
+    }
+</style>
+<h1>Amazing Stories from the Mind of...</h1>
+for _, post := range posts{
+    <section class="post">
+        <h2 class="post-title">{post.Title}</h2>
+        <p class="post-author">{post.Author}</p>
+        <p class="post-excerpt">{post.Excerpt}</p>
+        <p class="post-full">{post.Full}</p>
+        <p class="read-more">Read More</p>
+    </section>
+}
+<script>
+    const readMoreButtons = document.querySelectorAll('.read-more');
+    readMoreButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const postFull = button.previousElementSibling;
+            postFull.style.display = 'block';
+            button.style.display = 'none';
+        });
+    });
+</script>
+}

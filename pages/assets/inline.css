@@ -86,3 +86,41 @@ main {
   border-radius: var(--border-radius);
   padding: 1rem 2rem;
 }
+textarea {
+  width: 100%;
+  min-height: 10rem;
+  background: #222;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--border-radius);
+  color: var(--clr-text);
+  padding: .5rem .75rem;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+.translation__form-container {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0 2rem;
+}
+
+.translation__form-input-container>input[type=select] {
+  margin-right: auto;
+
+}
+
+.spinner {
+  width: 0;
+  height: 0;
+  position: relative;
+  left: calc(50% - 3rem);
+  top: -20px;
+}
+
+.spinner>svg {
+  fill: var(--clr-secondary);
+  width: 6rem;
+  height: 6rem;
+}

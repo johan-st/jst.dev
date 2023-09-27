@@ -34,7 +34,7 @@ var (
 
 	// nav and footer links
 	navLinks = []pages.Link{
-		{Active: false, Url: "/docs", Text: "docs", External: false},
+		{Active: false, Url: "/ai", Text: "AI features", External: false},
 	}
 	footerLinks = []pages.Link{
 		{Active: false, Url: "https://www.dpj.se", Text: "Live site", External: true},
@@ -66,12 +66,34 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/:page", srv.handleTempl())
 	// h.router.HandleFunc("GET", "/admin/:page", h.handleAdminTempl())
 	// h.router.HandleFunc("GET", "/admin/images/:id", h.handleAdminImage())
+	
+	// AI
+	srv.router.HandleFunc("POST", "/ai/translate", srv.handleAiTranslation())
+	srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
 
 	// 404
 	srv.router.NotFound = srv.handleNotFound()
 }
 
 // HANDLERS
+
+func (srv *server) handleAiStories() http.HandlerFunc {
+	// timing and logging
+	l := srv.l.With("handler", "ApiAiStories")
+	defer func(t time.Time) {
+		l.Debug(
+			"ready and waiting...",
+			"time", time.Since(t),
+		)
+	}(time.Now())
+
+	// setup
+
+	// handler
+	return func(w http.ResponseWriter, r *http.Request) {
+		srv.respCode(http.StatusNotImplemented, w, r)
+	}
+}
 
 // handleTempl serves a template.
 func (srv *server) handleTempl() http.HandlerFunc {
@@ -104,6 +126,8 @@ func (srv *server) handleTempl() http.HandlerFunc {
 		ThemeStyleTag: baseStyles,
 	}
 
+	availablePosts := srv.getAvailablePosts("content/blog")
+
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func(t time.Time) {
@@ -117,7 +141,9 @@ func (srv *server) handleTempl() http.HandlerFunc {
 
 		switch page {
 		case "":
-			content = pages.Landing()
+			content = pages.Landing(availablePosts)
+		case "ai":
+			content = pages.OpenAI()
 		default:
 			file, err := os.ReadFile("_docs/thoughts.md")
 			if err != nil {
@@ -238,4 +264,19 @@ func (srv *server) respCode(code int, w http.ResponseWriter, r *http.Request) {
 
 func (srv *server) Handler() http.Handler {
 	return srv.router
+}
+
+// HELPERS
+
+func (srv *server) getAvailablePosts(dir string) []pages.Post {
+	// get all files in dir
+	_, err := os.ReadDir(dir)
+	if err != nil {
+		srv.l.Error("read dir", "err", err)
+	}
+
+	return []pages.Post{
+		{Title: "test for the one", Slug: "testslug"},
+		{Title: "test 2 the moon", Slug: "testslug-2"},
+	}
 }
