@@ -1,22 +1,19 @@
 package pages
 
-
-
 type Link struct {
-    Active      bool
     Url         string
     Text        string
     External    bool
 }
 
-
 templ link(li Link){
     <a href={templ.URL(li.Url)} 
-    if li.External{ 
-        target="_blank"
-    }
-    class={ "link",templ.KV("active",li.Active)}
-    >{li.Text}</a>
+        if li.External{ 
+            target="_blank"
+        }
+        class={ "link" }>
+    {li.Text}
+    </a>
 }
 
 templ spinner(spinnerId string){

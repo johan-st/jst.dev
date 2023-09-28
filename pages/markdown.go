@@ -25,7 +25,7 @@ type PostMeta map[string]interface{}
 type Post struct {
 	Title string
 	Body  []byte
-	Slug  string
+	Path  string
 	PostMeta
 }
 
@@ -66,7 +66,6 @@ func FileToPost(file []byte, basePath string) (Post, error) {
 	if basePath[0] != '/' {
 		basePath = "/" + basePath
 	}
-	
 
 	document := md.Parser().Parse(text.NewReader(file))
 	metaData := document.OwnerDocument().Meta()
@@ -104,7 +103,7 @@ func FileToPost(file []byte, basePath string) (Post, error) {
 	return Post{
 		Title:    title.(string), // we checked
 		Body:     buf.Bytes(),
-		Slug:     basePath + slug.(string), // we checked
+		Path:     basePath + slug.(string), // we checked
 		PostMeta: metaData,
 	}, nil
 }

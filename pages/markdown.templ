@@ -2,7 +2,7 @@ package pages
 
 templ MarkdownPost(post Post) {
     <h1>{post.Title}</h1>
-    <div class="markdown-container content" id={"md_"+post.Slug}> 
+    <div class="markdown-container content" id={"md_"+post.Path}> 
         {! post }
     </div>	
 }
@@ -12,7 +12,7 @@ templ Blog(posts *[]Post) {
 <div> 
     <ul hx-boost="true">
         for _, post := range *posts {
-            <li><a href={templ.SafeURL(post.Slug)}>{post.Title}</a></li>
+            <li><a href={templ.SafeURL(post.Path)}>{post.Title}</a></li>
         }
     </ul>
 </div>

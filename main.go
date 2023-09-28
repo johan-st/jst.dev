@@ -27,17 +27,17 @@ func main() {
 	if *flagDev {
 		logger.SetReportCaller(true)
 	}
-	
+
 	l := logger.WithPrefix(logger.GetPrefix() + ".http")
 	router := newRouter(l)
 	router.prepareRoutes()
 
 	logger.Info(
-		"startup complete, handing over to http server",
-		"time", time.Since(startTime),
+		"handing over to http server",
+		logTimeSpent, time.Since(startTime),
 	)
-	
-	logger.Fatal(l, runServer(l,&router))
+
+	logger.Fatal(l, runServer(l, &router))
 }
 
 func runServer(l *log.Logger, s *server) error {

@@ -17,20 +17,19 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"time_elapsed", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
 	// setup
-	var (
-		client *ai.Client
-	)
+
 	OPENAI_API_KEY := os.Getenv("OPENAI_API_KEY")
 	if OPENAI_API_KEY == "" {
 		l.Fatal("OPENAI_API_KEY not set")
 	}
-	client = ai.NewClient(OPENAI_API_KEY)
+
+	client := ai.NewClient(OPENAI_API_KEY)
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +38,7 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 		defer func(t time.Time) {
 			l.Debug(
 				"respond",
-				"time_elapsed", time.Since(t),
+				logTimeSpent, time.Since(t),
 			)
 		}(time.Now())
 
@@ -85,7 +84,7 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 			srv.respCode(http.StatusInternalServerError, w, r)
 			l.Error(
 				"openAI api error",
-				"error", err,
+				logError, err,
 			)
 			return
 		}
@@ -105,7 +104,7 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 			srv.respCode(http.StatusInternalServerError, w, r)
 			l.Error(
 				"render 'translation' page",
-				"error", err,
+				logError, err,
 			)
 			return
 		}

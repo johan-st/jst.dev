@@ -10,7 +10,6 @@ import "io"
 import "bytes"
 
 type Link struct {
-	Active   bool
 	Url      string
 	Text     string
 	External bool
@@ -29,7 +28,7 @@ func link(li Link) templ.Component {
 			var_1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var var_2 = []any{"link", templ.KV("active", li.Active)}
+		var var_2 = []any{"link"}
 		err = templ.RenderCSSItems(ctx, templBuffer, var_2...)
 		if err != nil {
 			return err

@@ -15,9 +15,37 @@ import (
 
 //go:embed content
 var embededFileSystem embed.FS
-var (
-	globalTitle = "dpj-docs"
-	darkTheme   = pages.Theme{
+
+func defaultPageData() (pages.PageData, error) {
+	cssInline, err := fs.ReadFile(embededFileSystem, "content/assets/inline.css")
+	if err != nil {
+		return pages.PageData{}, err
+	}
+
+	themeComponent, err := defaultTheme().Component()
+	if err != nil {
+		return pages.PageData{}, err
+	}
+
+	return pages.PageData{
+		DocTitle: "dpj-ai",
+		TopNav: []pages.Link{
+			{Url: "/ai/translate", Text: "Translation", External: false},
+			{Url: "/todos", Text: "ToDo", External: false},
+			{Url: "/", Text: "Docs", External: false},
+		},
+		FooterLinks: []pages.Link{
+			{Url: "https://www.dpj.se", Text: "Live site", External: true},
+			{Url: "https://dpj.local", Text: "local site", External: true},
+		},
+		Metadata:    map[string]string{"Description": "desc", "Keywords": "e-comm docs", "Author": "dpj"},
+		StyleInline: pages.Style(string(cssInline)),
+		StyleTheme:  themeComponent,
+	}, nil
+}
+
+func defaultTheme() pages.Theme {
+	return pages.Theme{
 		ColorPrimary:    "#f90",
 		ColorSecondary:  "#fa3",
 		ColorBackground: "#333",
@@ -25,24 +53,7 @@ var (
 		ColorBorder:     "#666",
 		BorderRadius:    "1rem",
 	}
-
-	metadata = map[string]string{
-		"Description": "desc",
-		"Keywords":    "e-comm docs",
-		"Author":      "dpj",
-	}
-
-	// nav and footer links
-	navLinks = []pages.Link{
-		{Active: false, Url: "/ai/translate", Text: "Translation", External: false},
-		{Active: false, Url: "/todos", Text: "ToDo", External: false},
-		{Active: false, Url: "/", Text: "Docs", External: false},
-	}
-	footerLinks = []pages.Link{
-		{Active: false, Url: "https://www.dpj.se", Text: "Live site", External: true},
-		{Active: false, Url: "https://dpj.local", Text: "local site", External: true},
-	}
-)
+}
 
 type server struct {
 	l      *log.Logger
@@ -55,9 +66,13 @@ type server struct {
 
 func newRouter(l *log.Logger) server {
 	l = l.WithPrefix(l.GetPrefix() + ".router")
+
+	// setup
 	return server{
-		l:      l,
-		router: way.NewRouter(),
+		l:             l,
+		router:        way.NewRouter(),
+		translations:  []pages.Translation{},
+		availableDocs: []pages.Post{},
 	}
 }
 
@@ -68,7 +83,6 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/favicon.ico", srv.handleStaticFile("content/static/favicon.ico"))
 	srv.router.HandleFunc("GET", "/static", srv.handleNotFound())
 	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("content/static", "/static/"))
-	// srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("content/static", "static"))
 
 	// GET
 	srv.router.HandleFunc("GET", "/docs", srv.handleRedirect(http.StatusTemporaryRedirect, "/"))
@@ -92,8 +106,8 @@ func (srv *server) handleAiStories() http.HandlerFunc {
 
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"elapsed_time", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
@@ -113,44 +127,30 @@ func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
 	l := srv.l.
 		WithPrefix(srv.l.GetPrefix()+".Markdown").
 		With(
-			"root dir", rootDir,
-			"base url path", basePath,
+			logRootDir, rootDir,
+			logBaseURL, basePath,
 		)
 
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"elapsed_time", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
 	// setup
-	// get base css styles
-	styles, err := fs.ReadFile(embededFileSystem, "content/assets/inline.css")
+
+	pageData, err := defaultPageData()
 	if err != nil {
-		l.Fatal("Could not read main.css", "error", err)
+		l.Fatal("Could not get default page data", logError, err)
 	}
-
-	baseStyles, err := pages.StyleTag(darkTheme, string(styles))
-	if err != nil {
-		l.Fatal("Could not create style tag", "error", err)
-	}
-
-	data := pages.MainData{
-		DocTitle:      globalTitle,
-		TopNav:        navLinks,
-		FooterLinks:   footerLinks,
-		Metadata:      metadata,
-		ThemeStyleTag: baseStyles,
-	}
-
 	markdownFS, err := fs.Sub(embededFileSystem, rootDir)
 	if err != nil {
-		l.Fatal("load filesystem", "error", err)
+		l.Fatal("load filesystem", logError, err)
 	}
 	srv.availableDocs, err = getAvailablePosts(markdownFS, basePath)
 	if err != nil {
-		l.Fatal("Could not get available posts", "error", err)
+		l.Fatal("Could not get available posts", logError, err)
 	}
 
 	// handler
@@ -159,16 +159,16 @@ func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
 
 		defer func(t time.Time) {
 			l.Debug("serving page",
-				"elapsed_time", time.Since(t),
-				"path", r.URL.Path,
+				logTimeSpent, time.Since(t),
+				logReqPath, r.URL.Path,
 			)
 		}(time.Now())
 
 		var content templ.Component
 
 		for _, p := range srv.availableDocs {
-			l.Debug("checking path", "path", p.Slug, "url", r.URL.Path)
-			if p.Slug == r.URL.Path {
+			l.Debug("checking path", logFilePath, p.Path, logReqPath, r.URL.Path)
+			if p.Path == r.URL.Path {
 				content = pages.MarkdownPost(p)
 				break
 			}
@@ -178,10 +178,10 @@ func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
 			return
 		}
 
-		layout := pages.Layout(data, content)
+		layout := pages.Layout(pageData, content)
 		err = layout.Render(r.Context(), w)
 		if err != nil {
-			l.Error("Could not render template", "error", err)
+			l.Error("Could not render template", logError, err)
 			srv.respCode(http.StatusInternalServerError, w, r)
 		}
 	}
@@ -195,29 +195,15 @@ func (srv *server) handlePage() http.HandlerFunc {
 
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"elapsed_time", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
 	// setup
-	// get base css styles
-	styles, err := fs.ReadFile(embededFileSystem, "content/assets/inline.css")
+	pageData, err := defaultPageData()
 	if err != nil {
-		l.Fatal("Could not read main.css", "error", err)
-	}
-
-	baseStyles, err := pages.StyleTag(darkTheme, string(styles))
-	if err != nil {
-		l.Fatal("Could not create style tag", "error", err)
-	}
-
-	data := pages.MainData{
-		DocTitle:      globalTitle,
-		TopNav:        navLinks,
-		FooterLinks:   footerLinks,
-		Metadata:      metadata,
-		ThemeStyleTag: baseStyles,
+		l.Fatal("Could not get default page data", logError, err)
 	}
 
 	// handler
@@ -225,7 +211,7 @@ func (srv *server) handlePage() http.HandlerFunc {
 		// time and log
 		defer func(t time.Time) {
 			l.Debug("serving page",
-				"elapsed_time", time.Since(t),
+				logTimeSpent, time.Since(t),
 				"path", r.URL.Path,
 			)
 		}(time.Now())
@@ -242,38 +228,38 @@ func (srv *server) handlePage() http.HandlerFunc {
 		default:
 			file, err := fs.ReadFile(embededFileSystem, "content/docs/todo.md")
 			if err != nil {
-				l.Error("Could not read 'content/docs/todo.md'", "error", err)
+				l.Error("Could not read 'content/docs/todo.md'", logError, err)
 			}
 			post, err := pages.FileToPost(file, "")
 			if err != nil {
-				l.Error("Could not convert file to post", "error", err)
+				l.Error("Could not convert file to post", logError, err)
 			}
 			content = pages.MarkdownPost(post)
 		}
 
-		layout := pages.Layout(data, content)
+		layout := pages.Layout(pageData, content)
 
 		err = layout.Render(r.Context(), w)
 		if err != nil {
-			l.Error("Could not render template", "error", err)
+			l.Error("Could not render template", logError, err)
 			srv.respCode(http.StatusInternalServerError, w, r)
 		}
 	}
 }
 
-func (srv *server) handleStaticDir(rootDir,basePath string) http.HandlerFunc {
+func (srv *server) handleStaticDir(rootDir, basePath string) http.HandlerFunc {
 	// timing and logging
 	l := srv.l.
 		WithPrefix(srv.l.GetPrefix()+".StaticDir").
 		With(
-			"root_dir", rootDir,
-			"base_url", basePath,
-		)	
-		
+			logRootDir, rootDir,
+			logBaseURL, basePath,
+		)
+
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"elapsed_time", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
@@ -293,8 +279,8 @@ func (srv *server) handleStaticDir(rootDir,basePath string) http.HandlerFunc {
 		defer func(t time.Time) {
 			l.Info(
 				"serve file",
-				"path", r.URL.Path,
-				"elapsed_time", time.Since(t),
+				logReqPath, r.URL.Path,
+				logTimeSpent, time.Since(t),
 			)
 		}(time.Now())
 		r.URL.Path = r.URL.Path[len(basePath)-1:]
@@ -311,8 +297,8 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"elapsed_time", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
@@ -321,7 +307,9 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 	if err != nil {
 		l.Fatal(
 			"load file",
-			"path", path)
+			logFilePath, path,
+			logError, err,
+		)
 	}
 
 	// handler
@@ -332,7 +320,7 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 			srv.respCode(http.StatusInternalServerError, w, r)
 			l.Error(
 				"serve file",
-				"error", err,
+				logError, err,
 			)
 		}
 	}
@@ -344,13 +332,13 @@ func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
 		WithPrefix(srv.l.GetPrefix()+".Redirect").
 		With(
 			"code", code,
-			"target_url", url,
+			"to", url,
 		)
 
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"elapsed_time", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
@@ -372,12 +360,12 @@ func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
 func (srv *server) handleNotFound() http.HandlerFunc {
 	// timing and logging
 	l := srv.l.
-		WithPrefix(srv.l.GetPrefix()+".NotFound")
+		WithPrefix(srv.l.GetPrefix() + ".NotFound")
 
 	defer func(t time.Time) {
 		l.Debug(
-			"ready",
-			"time_elapsed", time.Since(t),
+			logReady,
+			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 

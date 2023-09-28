@@ -35,7 +35,7 @@ func MarkdownPost(post Post) templ.Component {
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString(templ.EscapeString("md_" + post.Slug))
+		_, err = templBuffer.WriteString(templ.EscapeString("md_" + post.Path))
 		if err != nil {
 			return err
 		}
@@ -89,7 +89,7 @@ func Blog(posts *[]Post) templ.Component {
 			if err != nil {
 				return err
 			}
-			var var_5 templ.SafeURL = templ.SafeURL(post.Slug)
+			var var_5 templ.SafeURL = templ.SafeURL(post.Path)
 			_, err = templBuffer.WriteString(templ.EscapeString(string(var_5)))
 			if err != nil {
 				return err

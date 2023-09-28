@@ -9,15 +9,16 @@ import "context"
 import "io"
 import "bytes"
 
-type MainData struct {
-	DocTitle      string
-	TopNav        []Link
-	FooterLinks   []Link
-	Metadata      map[string]string
-	ThemeStyleTag templ.Component
+type PageData struct {
+	DocTitle    string
+	Metadata    map[string]string
+	TopNav      []Link
+	FooterLinks []Link
+	StyleInline templ.Component
+	StyleTheme  templ.Component
 }
 
-func Layout(d MainData, content templ.Component) templ.Component {
+func Layout(data PageData, content templ.Component) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {
@@ -34,7 +35,7 @@ func Layout(d MainData, content templ.Component) templ.Component {
 		if err != nil {
 			return err
 		}
-		err = meta(d.Metadata).Render(ctx, templBuffer)
+		err = meta(data.Metadata).Render(ctx, templBuffer)
 		if err != nil {
 			return err
 		}
@@ -51,7 +52,7 @@ func Layout(d MainData, content templ.Component) templ.Component {
 		if err != nil {
 			return err
 		}
-		var var_3 string = d.DocTitle
+		var var_3 string = data.DocTitle
 		_, err = templBuffer.WriteString(templ.EscapeString(var_3))
 		if err != nil {
 			return err
@@ -60,7 +61,11 @@ func Layout(d MainData, content templ.Component) templ.Component {
 		if err != nil {
 			return err
 		}
-		err = d.ThemeStyleTag.Render(ctx, templBuffer)
+		err = data.StyleTheme.Render(ctx, templBuffer)
+		if err != nil {
+			return err
+		}
+		err = data.StyleInline.Render(ctx, templBuffer)
 		if err != nil {
 			return err
 		}
@@ -68,7 +73,7 @@ func Layout(d MainData, content templ.Component) templ.Component {
 		if err != nil {
 			return err
 		}
-		err = header(d.TopNav).Render(ctx, templBuffer)
+		err = header(data.TopNav).Render(ctx, templBuffer)
 		if err != nil {
 			return err
 		}
@@ -84,7 +89,7 @@ func Layout(d MainData, content templ.Component) templ.Component {
 		if err != nil {
 			return err
 		}
-		err = footer(d.FooterLinks).Render(ctx, templBuffer)
+		err = footer(data.FooterLinks).Render(ctx, templBuffer)
 		if err != nil {
 			return err
 		}

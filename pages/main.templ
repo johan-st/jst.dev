@@ -3,30 +3,32 @@ package pages
 
 
 
-type MainData struct {
-    DocTitle string
-    TopNav []Link
-    FooterLinks []Link
-    Metadata map[string]string
-    ThemeStyleTag templ.Component
+type PageData struct {
+	DocTitle 	string
+	Metadata 	map[string]string
+	TopNav 		[]Link
+	FooterLinks []Link
+	StyleInline templ.Component
+    StyleTheme  templ.Component
 }
 
-templ Layout(d MainData, content templ.Component ){
+templ Layout(data PageData, content templ.Component){
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        @meta(d.Metadata)
+        @meta(data.Metadata)
         <script src="/static/htmx.min.js"></script>
-        <title>{ d.DocTitle }</title>
-        {! d.ThemeStyleTag }   
+        <title>{ data.DocTitle }</title>
+        {! data.StyleTheme }   
+        {! data.StyleInline }
     </head>
     <body>
-        @header(d.TopNav)
+        @header(data.TopNav)
         <main>
             {! content }
         </main>
-        @footer(d.FooterLinks)
+        @footer(data.FooterLinks)
     </body>
     </html>
 }
