@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Kwynto/gosession"
 	"github.com/a-h/templ"
 	log "github.com/charmbracelet/log"
 	"github.com/johan-st/jst.dev/pages"
@@ -16,64 +17,11 @@ import (
 //go:embed content
 var embededFileSystem embed.FS
 
-func defaultPageData() (pages.PageData, error) {
-	cssInline, err := fs.ReadFile(embededFileSystem, "content/assets/inline.css")
-	if err != nil {
-		return pages.PageData{}, err
-	}
-
-	themeComponent, err := defaultTheme().Component()
-	if err != nil {
-		return pages.PageData{}, err
-	}
-
-	return pages.PageData{
-		DocTitle: "dpj-ai",
-		TopNav: []pages.Link{
-			{Url: "/ai/translate", Text: "Translation", External: false},
-			{Url: "/todos", Text: "ToDo", External: false},
-			{Url: "/", Text: "Docs", External: false},
-		},
-		FooterLinks: []pages.Link{
-			{Url: "https://www.dpj.se", Text: "Live site", External: true},
-			{Url: "https://dpj.local", Text: "local site", External: true},
-		},
-		Metadata:    map[string]string{"Description": "desc", "Keywords": "e-comm docs", "Author": "dpj"},
-		StyleInline: pages.Style(string(cssInline)),
-		StyleTheme:  themeComponent,
-	}, nil
-}
-
-func defaultTheme() pages.Theme {
-	return pages.Theme{
-		ColorPrimary:    "#f90",
-		ColorSecondary:  "#fa3",
-		ColorBackground: "#333",
-		ColorText:       "#aaa",
-		ColorBorder:     "#666",
-		BorderRadius:    "1rem",
-	}
-}
-
 type server struct {
-	l      *log.Logger
-	router *way.Router
-
-	// persistence
-	translations  []pages.Translation
-	availableDocs []pages.Post
-}
-
-func newRouter(l *log.Logger) server {
-	l = l.WithPrefix(l.GetPrefix() + ".router")
-
-	// setup
-	return server{
-		l:             l,
-		router:        way.NewRouter(),
-		translations:  []pages.Translation{},
-		availableDocs: []pages.Post{},
-	}
+	l             *log.Logger
+	router        *way.Router
+	availableDocs []pages.Page
+	defaultData   pages.Data
 }
 
 // Register handlers for routes
@@ -81,17 +29,20 @@ func (srv *server) prepareRoutes() {
 
 	// STATIC ASSETS
 	srv.router.HandleFunc("GET", "/favicon.ico", srv.handleStaticFile("content/static/favicon.ico"))
-	srv.router.HandleFunc("GET", "/static", srv.handleNotFound())
 	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("content/static", "/static/"))
 
 	// GET
-	srv.router.HandleFunc("GET", "/docs", srv.handleRedirect(http.StatusTemporaryRedirect, "/"))
-	srv.router.HandleFunc("GET", "/docs/", srv.handleMarkdown("content/docs", "docs"))
-	srv.router.HandleFunc("GET", "...", srv.handlePage()) // catch all
+	srv.router.HandleFunc("GET", "/ai/translate", srv.handlePageAiTranslation())
+	// srv.router.HandleFunc("GET", "/ai/prompt", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET", "/ai/stories", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET", "/ai", srv.handleNotImplemented())
+	srv.router.HandleFunc("GET", "/docs", srv.handleDocsIndex())
+	srv.router.HandleFunc("GET", "/docs/", srv.handleDocs())
+	srv.router.HandleFunc("GET", "/", srv.handleRedirect(http.StatusTemporaryRedirect, "/ai/translate"))
 
 	// POST
-	srv.router.HandleFunc("POST", "/ai/translate", srv.handleApiTranslationPost())
-	srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
+	srv.router.HandleFunc("POST", "/ai/translate", srv.handleAiTranslationPost())
+	// srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
 
 	// 404
 	srv.router.NotFound = srv.handleNotFound()
@@ -99,58 +50,24 @@ func (srv *server) prepareRoutes() {
 
 // HANDLERS
 
-func (srv *server) handleAiStories() http.HandlerFunc {
-	// timing and logging
-	l := srv.l.
-		WithPrefix(srv.l.GetPrefix() + ".AiStories")
-
-	defer func(t time.Time) {
-		l.Debug(
-			logReady,
-			logTimeSpent, time.Since(t),
-		)
-	}(time.Now())
-
-	// setup
-
-	// handler
-	return func(w http.ResponseWriter, r *http.Request) {
-		srv.respCode(http.StatusNotImplemented, w, r)
-	}
-}
-
-// handleMarkdown serves a pages from templates.
+// handleDocs serves a pages from templates.
 // NOTE: dirRoot can not end with a slash.
 // NOTE: dirRoot is relative to the embeded filesystem.
-func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
-	// timing and logging
+func (srv *server) handleDocs() http.HandlerFunc {
 	l := srv.l.
-		WithPrefix(srv.l.GetPrefix()+".Markdown").
-		With(
-			logRootDir, rootDir,
-			logBaseURL, basePath,
-		)
+		WithPrefix(srv.l.GetPrefix() + ".Docs")
 
 	defer func(t time.Time) {
-		l.Debug(
+		l.Info(
 			logReady,
 			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
 	// setup
-
 	pageData, err := defaultPageData()
 	if err != nil {
 		l.Fatal("Could not get default page data", logError, err)
-	}
-	markdownFS, err := fs.Sub(embededFileSystem, rootDir)
-	if err != nil {
-		l.Fatal("load filesystem", logError, err)
-	}
-	srv.availableDocs, err = getAvailablePosts(markdownFS, basePath)
-	if err != nil {
-		l.Fatal("Could not get available posts", logError, err)
 	}
 
 	// handler
@@ -158,7 +75,7 @@ func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
 		// time and log
 
 		defer func(t time.Time) {
-			l.Debug("serving page",
+			l.Debug("responding",
 				logTimeSpent, time.Since(t),
 				logReqPath, r.URL.Path,
 			)
@@ -167,16 +84,68 @@ func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
 		var content templ.Component
 
 		for _, p := range srv.availableDocs {
-			l.Debug("checking path", logFilePath, p.Path, logReqPath, r.URL.Path)
 			if p.Path == r.URL.Path {
-				content = pages.MarkdownPost(p)
-				break
+				content = pages.Content(p)
+				l.Debug("document found",
+					logFilePath, p.Path,
+					logReqPath, r.URL.Path)
+
 			}
 		}
-		if content == nil {
-			srv.respCode(http.StatusNotFound, w, r)
-			return
+		if content == nil { // content not found
+			l.Warn("no such document",
+				logReqPath, r.URL.Path,
+				"referer", r.Header.Values("referer"),
+			)
+			content = pages.Docs404(&srv.availableDocs)
 		}
+
+		err = pages.Layout(pageData, content).Render(r.Context(), w)
+		if err != nil {
+			l.Error("Could not render template", logError, err)
+			srv.respCode(http.StatusInternalServerError, w, r)
+		}
+	}
+}
+
+// handlePage serves a pages from templates.
+func (srv *server) handlePageAiTranslation() http.HandlerFunc {
+	// timing and logging
+	l := srv.l.
+		WithPrefix(srv.l.GetPrefix() + ".PageAiTranslation")
+
+	defer func(t time.Time) {
+		l.Info(
+			logReady,
+			logTimeSpent, time.Since(t),
+		)
+	}(time.Now())
+
+	// setup
+
+	sessionHandler := newSessionHandler(l)
+	pageData, err := defaultPageData()
+	if err != nil {
+		l.Fatal("Could not get default page data", logError, err)
+	}
+
+	// handler
+	return func(w http.ResponseWriter, r *http.Request) {
+		var (
+			content templ.Component
+			session gosession.SessionId
+		)
+		// time and log
+		defer func(t time.Time) {
+			l.Debug("serving page",
+				logTimeSpent, time.Since(t),
+				"path", r.URL.Path,
+			)
+		}(time.Now())
+
+		session = gosession.Start(&w, r)
+		trans := sessionHandler.getTranslations(&session)
+		content = pages.OpenAI(trans)
 
 		layout := pages.Layout(pageData, content)
 		err = layout.Render(r.Context(), w)
@@ -188,23 +157,19 @@ func (srv *server) handleMarkdown(rootDir, basePath string) http.HandlerFunc {
 }
 
 // handlePage serves a pages from templates.
-func (srv *server) handlePage() http.HandlerFunc {
+func (srv *server) handleDocsIndex() http.HandlerFunc {
 	// timing and logging
 	l := srv.l.
-		WithPrefix(srv.l.GetPrefix() + ".Page")
+		WithPrefix(srv.l.GetPrefix() + ".DocsIndex")
 
 	defer func(t time.Time) {
-		l.Debug(
+		l.Info(
 			logReady,
 			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
 	// setup
-	pageData, err := defaultPageData()
-	if err != nil {
-		l.Fatal("Could not get default page data", logError, err)
-	}
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -216,30 +181,10 @@ func (srv *server) handlePage() http.HandlerFunc {
 			)
 		}(time.Now())
 
-		// uri
+		content := pages.Blog(&srv.availableDocs)
 
-		var content templ.Component
-
-		switch r.URL.Path {
-		case "/":
-			content = pages.Blog(&srv.availableDocs)
-		case "/ai/translate":
-			content = pages.OpenAI(srv.translations)
-		default:
-			file, err := fs.ReadFile(embededFileSystem, "content/docs/todo.md")
-			if err != nil {
-				l.Error("Could not read 'content/docs/todo.md'", logError, err)
-			}
-			post, err := pages.FileToPost(file, "")
-			if err != nil {
-				l.Error("Could not convert file to post", logError, err)
-			}
-			content = pages.MarkdownPost(post)
-		}
-
-		layout := pages.Layout(pageData, content)
-
-		err = layout.Render(r.Context(), w)
+		layout := pages.Layout(srv.defaultData, content)
+		err := layout.Render(r.Context(), w)
 		if err != nil {
 			l.Error("Could not render template", logError, err)
 			srv.respCode(http.StatusInternalServerError, w, r)
@@ -257,7 +202,7 @@ func (srv *server) handleStaticDir(rootDir, basePath string) http.HandlerFunc {
 		)
 
 	defer func(t time.Time) {
-		l.Debug(
+		l.Info(
 			logReady,
 			logTimeSpent, time.Since(t),
 		)
@@ -277,7 +222,7 @@ func (srv *server) handleStaticDir(rootDir, basePath string) http.HandlerFunc {
 	// return http.FileServer(http.FS(staticFS))
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func(t time.Time) {
-			l.Info(
+			l.Debug(
 				"serve file",
 				logReqPath, r.URL.Path,
 				logTimeSpent, time.Since(t),
@@ -296,7 +241,7 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 		With("file", path)
 
 	defer func(t time.Time) {
-		l.Debug(
+		l.Info(
 			logReady,
 			logTimeSpent, time.Since(t),
 		)
@@ -327,16 +272,40 @@ func (srv *server) handleStaticFile(path string) http.HandlerFunc {
 }
 
 func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
-	// timing and logging
-	l := srv.l.
+	return srv.subHandleRedirect(srv.l, code, url)
+
+}
+func (srv *server) handleNotImplemented() http.HandlerFunc {
+	l := srv.l.WithPrefix(
+		srv.l.GetPrefix() + ".NotImplemented",
+	)
+	l.Error("handler not implemented")
+	return func(w http.ResponseWriter, r *http.Request) {
+		l.Error("Not implemented",
+			"referer", r.Header.Values("referer"),
+			logReqPath, r.URL.Path,
+		)
+		w.WriteHeader(http.StatusNotImplemented)
+		w.Write([]byte("Not implemented:\nmesssage: "))
+	}
+}
+
+func (srv *server) handleNotFound() http.HandlerFunc {
+	return srv.subHandleNotFound(srv.l)
+}
+
+// SUB HANDLERS
+// sub handlers are used by other handlers
+
+func (srv *server) subHandleRedirect(l *log.Logger, code int, url string) http.HandlerFunc {
+	l = l.
 		WithPrefix(srv.l.GetPrefix()+".Redirect").
 		With(
 			"code", code,
 			"to", url,
 		)
-
 	defer func(t time.Time) {
-		l.Debug(
+		l.Info(
 			logReady,
 			logTimeSpent, time.Since(t),
 		)
@@ -357,24 +326,31 @@ func (srv *server) handleRedirect(code int, url string) http.HandlerFunc {
 	}
 }
 
-func (srv *server) handleNotFound() http.HandlerFunc {
+func (srv *server) subHandleNotFound(l *log.Logger) http.HandlerFunc {
 	// timing and logging
-	l := srv.l.
+	l = l.
 		WithPrefix(srv.l.GetPrefix() + ".NotFound")
 
 	defer func(t time.Time) {
-		l.Debug(
+		l.Info(
 			logReady,
 			logTimeSpent, time.Since(t),
 		)
 	}(time.Now())
 
 	// setup
+	pageData, err := defaultPageData()
+	layout := pages.Layout(pageData, pages.NotFound())
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
-		l.Debug("responding", "referer", r.Header.Values("referer"))
-		srv.respCode(http.StatusNotFound, w, r)
+		l.Warn("responding", "referer", r.Header.Values("referer"), logReqPath, r.URL.Path)
+		w.WriteHeader(http.StatusNotFound)
+		err = layout.Render(r.Context(), w)
+		if err != nil {
+			l.Error("Could not render template", logError, err)
+			srv.respCode(http.StatusInternalServerError, w, r)
+		}
 	}
 
 }
@@ -392,12 +368,24 @@ func (srv *server) Handler() http.Handler {
 	return srv.router
 }
 
+// MIDDLEWARE
+
+// func (srv *server) withSession(next http.HandlerFunc) http.HandlerFunc {
+// 	// setup
+
+// 	// middleware
+// 	return func(w http.ResponseWriter, r *http.Request) {
+
+// 	next(w, r)
+// 	}
+// }
+
 // HELPERS
 
-func getAvailablePosts(filesystem fs.FS, basePath string) ([]pages.Post, error) {
+func getMarkdown(filesystem fs.FS, basePathForMatching string) ([]pages.Page, error) {
 	var (
 		paths []string
-		posts []pages.Post
+		posts []pages.Page
 	)
 
 	fs.WalkDir(filesystem, ".", addToList(&paths))
@@ -407,7 +395,7 @@ func getAvailablePosts(filesystem fs.FS, basePath string) ([]pages.Post, error) 
 			return nil, err
 		}
 
-		post, err := pages.FileToPost(file, basePath)
+		post, err := pages.MdToPage(file, basePathForMatching)
 		if err != nil {
 			return nil, err
 		}
@@ -426,5 +414,74 @@ func addToList(list *[]string) fs.WalkDirFunc {
 			*list = append(*list, path)
 		}
 		return nil
+	}
+}
+
+func newRouter(l *log.Logger) server {
+	// setup
+	tempFs, err := fs.Sub(embededFileSystem, "content/docs")
+	if err != nil {
+		l.Fatal("load filesystem", logError, err)
+	}
+	availableDocs, err := getMarkdown(tempFs, "docs")
+	if err != nil {
+		l.Fatal("Could not get available posts", logError, err)
+	}
+	if len(availableDocs) == 0 {
+		l.Error("No docs found", logError, err)
+	}
+
+	pageData, err := defaultPageData()
+	if err != nil {
+		l.Fatal("Could not get default page data", logError, err)
+	}
+
+	return server{
+		l:             l,
+		router:        way.NewRouter(),
+		availableDocs: availableDocs,
+		defaultData:   pageData,
+	}
+}
+
+// DEFAULTS
+
+func defaultPageData() (pages.Data, error) {
+	cssInline, err := fs.ReadFile(embededFileSystem, "content/assets/inline.css")
+	if err != nil {
+		return pages.Data{}, err
+	}
+
+	themeComponent, err := defaultTheme().Component()
+	if err != nil {
+		return pages.Data{}, err
+	}
+
+	return pages.Data{
+		DocTitle: "dpj-ai",
+		TopNav: []pages.Link{
+			{Url: "/ai/translate", Text: "Translation", External: false},
+			{Url: "/docs/todo", Text: "ToDo", External: false},
+			{Url: "/docs", Text: "Docs", External: false},
+			{Url: "/404?", Text: "404", External: false},
+		},
+		FooterLinks: []pages.Link{
+			{Url: "https://www.dpj.se", Text: "Live site", External: true},
+			{Url: "https://dpj.local", Text: "local site", External: true},
+		},
+		Metadata:    map[string]string{"Description": "desc", "Keywords": "e-comm docs", "Author": "dpj"},
+		StyleInline: pages.Style(string(cssInline)),
+		StyleTheme:  themeComponent,
+	}, nil
+}
+
+func defaultTheme() pages.Theme {
+	return pages.Theme{
+		ColorPrimary:    "#f90",
+		ColorSecondary:  "#fa3",
+		ColorBackground: "#333",
+		ColorText:       "#aaa",
+		ColorBorder:     "#666",
+		BorderRadius:    "1rem",
 	}
 }

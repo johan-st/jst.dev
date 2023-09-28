@@ -1,5 +1,5 @@
 ---
-title: ToDo
+title: To be done
 description: ToDo list for this website
 path: todo
 ---

@@ -9,7 +9,7 @@ import "context"
 import "io"
 import "bytes"
 
-type PageData struct {
+type Data struct {
 	DocTitle    string
 	Metadata    map[string]string
 	TopNav      []Link
@@ -18,7 +18,7 @@ type PageData struct {
 	StyleTheme  templ.Component
 }
 
-func Layout(data PageData, content templ.Component) templ.Component {
+func Layout(data Data, content templ.Component) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {
@@ -267,6 +267,57 @@ func meta(meta map[string]string) templ.Component {
 			if err != nil {
 				return err
 			}
+		}
+		if !templIsBuffer {
+			_, err = templBuffer.WriteTo(w)
+		}
+		return err
+	})
+}
+
+func NotFound() templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
+		templBuffer, templIsBuffer := w.(*bytes.Buffer)
+		if !templIsBuffer {
+			templBuffer = templ.GetBuffer()
+			defer templ.ReleaseBuffer(templBuffer)
+		}
+		ctx = templ.InitializeContext(ctx)
+		var_10 := templ.GetChildren(ctx)
+		if var_10 == nil {
+			var_10 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		_, err = templBuffer.WriteString("<h1>")
+		if err != nil {
+			return err
+		}
+		var_11 := `404`
+		_, err = templBuffer.WriteString(var_11)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</h1><p>")
+		if err != nil {
+			return err
+		}
+		var_12 := `Page not found`
+		_, err = templBuffer.WriteString(var_12)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</p><a href=\"/\">")
+		if err != nil {
+			return err
+		}
+		var_13 := `Go home`
+		_, err = templBuffer.WriteString(var_13)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</a>")
+		if err != nil {
+			return err
 		}
 		if !templIsBuffer {
 			_, err = templBuffer.WriteTo(w)

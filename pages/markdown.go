@@ -20,23 +20,23 @@ var (
 	once sync.Once
 )
 
-type PostMeta map[string]interface{}
+type PageMeta map[string]interface{}
 
-type Post struct {
+type Page struct {
 	Title string
 	Body  []byte
 	Path  string
-	PostMeta
+	PageMeta
 }
 
-func (p Post) Render(ctx context.Context, w io.Writer) error {
+func (p Page) Render(ctx context.Context, w io.Writer) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 	return md.Convert(p.Body, w)
 }
 
-func FileToPost(file []byte, basePath string) (Post, error) {
+func MdToPage(file []byte, baseUrl string) (Page, error) {
 	// setup markdown parser
 	once.Do(func() {
 		md = goldmark.New(
@@ -56,37 +56,37 @@ func FileToPost(file []byte, basePath string) (Post, error) {
 			),
 		)
 	})
-	// make sure we have a start and end with a slash
-	if basePath == "" {
-		basePath = "/"
+	// make sure we start and end with a slash
+	if baseUrl == "" {
+		baseUrl = "/"
 	}
-	if basePath[len(basePath)-1] != '/' {
-		basePath += "/"
+	if baseUrl[len(baseUrl)-1] != '/' {
+		baseUrl += "/"
 	}
-	if basePath[0] != '/' {
-		basePath = "/" + basePath
+	if baseUrl[0] != '/' {
+		baseUrl = "/" + baseUrl
 	}
 
 	document := md.Parser().Parse(text.NewReader(file))
 	metaData := document.OwnerDocument().Meta()
 	title, ok := metaData["title"]
 	if !ok {
-		return Post{}, fmt.Errorf("no title found on post. file starts %s", file[:60])
+		return Page{}, fmt.Errorf("no title found on post. file starts %s", file[:100])
 	}
 	switch title.(type) {
 	case string:
 	default:
-		return Post{}, fmt.Errorf("title is not a string. file starts %s", file[:60])
+		return Page{}, fmt.Errorf("title is not a string. file starts %s", file[:100])
 	}
 
 	slug, ok := metaData["path"]
 	if !ok {
-		return Post{}, fmt.Errorf("no path found on post. file starts %s", file[:60])
+		return Page{}, fmt.Errorf("no path found on post. file starts %s", file[:100])
 	}
 	switch slug.(type) {
 	case string:
 	default:
-		return Post{}, fmt.Errorf("path is not a string. file starts %s", file[:60])
+		return Page{}, fmt.Errorf("path is not a string. file starts %s", file[:100])
 	}
 
 	// make sure we DON'T have a trailing slash
@@ -100,10 +100,10 @@ func FileToPost(file []byte, basePath string) (Post, error) {
 	buf := &bytes.Buffer{}
 	md.Convert(file, buf)
 
-	return Post{
+	return Page{
 		Title:    title.(string), // we checked
 		Body:     buf.Bytes(),
-		Path:     basePath + slug.(string), // we checked
-		PostMeta: metaData,
+		Path:     baseUrl + slug.(string), // we checked
+		PageMeta: metaData,
 	}, nil
 }

@@ -6,17 +6,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/Kwynto/gosession"
 	"github.com/johan-st/jst.dev/pages"
 	ai "github.com/sashabaranov/go-openai"
 )
 
-func (srv *server) handleApiTranslationPost() http.HandlerFunc {
+func (srv *server) handleAiTranslationPost() http.HandlerFunc {
 	// timing and logging
 	l := srv.l.
-		WithPrefix(srv.l.GetPrefix() + ".ApiTranslationPost")
+		WithPrefix(srv.l.GetPrefix() + ".AiTranslationPost")
 
 	defer func(t time.Time) {
-		l.Debug(
+		l.Info(
 			logReady,
 			logTimeSpent, time.Since(t),
 		)
@@ -30,17 +31,19 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 	}
 
 	client := ai.NewClient(OPENAI_API_KEY)
+	sessionHandler := newSessionHandler(l)
 
 	// handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		// timing and logging
-		l := srv.l.With("handler", "ApiTranslation")
 		defer func(t time.Time) {
 			l.Debug(
 				"respond",
 				logTimeSpent, time.Since(t),
 			)
 		}(time.Now())
+
+		session := gosession.Start(&w, r)
 
 		// get form data
 		text := r.FormValue("text")
@@ -80,6 +83,11 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 				},
 			},
 		)
+		l.Info("openAI api response",
+			"model", model,
+			"tokens used", resp.Usage.TotalTokens,
+		)
+
 		if err != nil {
 			srv.respCode(http.StatusInternalServerError, w, r)
 			l.Error(
@@ -92,14 +100,9 @@ func (srv *server) handleApiTranslationPost() http.HandlerFunc {
 		for _, c := range resp.Choices {
 			currentTranslation.Choices = append(currentTranslation.Choices, c.Message.Content)
 		}
-		srv.translations = prepend(srv.translations, currentTranslation)
 
-		// limit num of translations
-		for len(srv.translations) > 10 {
-			srv.translations = srv.translations[:10]
-		}
-
-		err = pages.Translated(srv.translations).Render(r.Context(), w)
+		translations := sessionHandler.addTranslations(&session, currentTranslation)
+		err = pages.Translated(translations).Render(r.Context(), w)
 		if err != nil {
 			srv.respCode(http.StatusInternalServerError, w, r)
 			l.Error(

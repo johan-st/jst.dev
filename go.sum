@@ -1,3 +1,5 @@
+github.com/Kwynto/gosession v0.3.0 h1:oecl4EZliQkibPxcdx6hyvOeWq1vWitiu1ttvioTtkk=
+github.com/Kwynto/gosession v0.3.0/go.mod h1:t9ebCczcC/w08whDLwShIZ59finO9EyRkiQf5B31m90=
 github.com/a-h/templ v0.2.334 h1:/mKupkgHGeSSeC0KiGRvmUoRGQJuku9VGVhRP1CeWgY=
 github.com/a-h/templ v0.2.334/go.mod h1:6Lfhsl3Z4/vXl7jjEjkJRCqoWDGjDnuKgzjYMDSddas=
 github.com/alecthomas/chroma v0.10.0 h1:7XDcGkCQopCNKjZHfYrNLraA+M7e0fMiJ/Mfikbfjek=

@@ -3,6 +3,7 @@ module github.com/johan-st/jst.dev
 go 1.20
 
 require (
+	github.com/Kwynto/gosession v0.3.0
 	github.com/a-h/templ v0.2.334
 	github.com/charmbracelet/log v0.2.4
 	github.com/sashabaranov/go-openai v1.15.3

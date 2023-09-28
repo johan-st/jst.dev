@@ -1,0 +1,29 @@
+package pages
+
+templ Content(p Page) {
+    <h1>{p.Title}</h1>
+    <div class="content" id={"page_"+p.Path}> 
+        {! p }
+    </div>	
+}
+
+templ Blog(pages *[]Page) {
+    <h1>Docs</h1>
+    <div> 
+        @listPages(pages)
+    </div>
+}
+
+templ Blog404(pages *[]Page) {
+    <h1>404</h1>
+    <p>This article does not exist..  Here are some alternatives</p>
+    @listPages(pages)
+}
+
+templ listPages(pages *[]Page) {
+    <ul hx-boost="true">
+        for _, p := range *pages {
+            <li><a href={templ.SafeURL(p.Path)}>{p.Title}</a></li>
+        }
+    </ul>
+}

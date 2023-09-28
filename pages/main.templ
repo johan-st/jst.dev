@@ -3,7 +3,7 @@ package pages
 
 
 
-type PageData struct {
+type Data struct {
 	DocTitle 	string
 	Metadata 	map[string]string
 	TopNav 		[]Link
@@ -12,7 +12,7 @@ type PageData struct {
     StyleTheme  templ.Component
 }
 
-templ Layout(data PageData, content templ.Component){
+templ Layout(data Data, content templ.Component){
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -80,4 +80,11 @@ templ meta(meta map[string]string) {
     for key, value := range meta {
         <meta name={ key } content={ value } />
     }
+}
+
+
+templ NotFound() {
+    <h1>404</h1>
+    <p>Page not found</p>
+    <a href="/">Go home</a>
 }
