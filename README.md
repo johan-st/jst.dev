@@ -11,15 +11,24 @@ templ generate -watch -path pages
 # live reload (requires anko)
 anko
 
-# run server
-go run . -v -dev
+# run for dev
+go run . -debug -dev
+
+# run as in production
+go run .
 ```
 
 ## Build
 
+
 ```bash
-# build
-go build -o dpj-internal-web .
+# build for local environment
+go build -o dpj-web . 
+```
+```bash
+GOOS=linux GOARCH=amd64 go build -o build/dpj_linux && \
+GOOS=darwin GOARCH=amd64 go build -o build/dpj_macos && \
+GOOS=windows GOARCH=amd64 go build -o build/dpj_win && echo "done"
 ```
 
 

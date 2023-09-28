@@ -13,15 +13,22 @@ import (
 func main() {
 	startTime := time.Now()
 
-	flagVerbose := flag.Bool("v", false, "Printing all log levels")
-	flagDev := flag.Bool("dev", false, "loggs include caller")
+	flagVersion := flag.Bool("v", false, "version")
+	flagDebug := flag.Bool("debug", false, "Printing all log levels")
+	flagDev := flag.Bool("dev", false, "loggs include caller and debug level")
 	flag.Parse()
+
+	if *flagVersion {
+		fmt.Println("Version: 0.0.1")
+		os.Exit(0)
+	}
+
 
 	logger := log.New(os.Stderr)
 	logger.SetPrefix("main")
 	logger.SetReportTimestamp(true)
 
-	if *flagVerbose {
+	if *flagDebug {
 		logger.SetLevel(log.DebugLevel)
 	}
 	if *flagDev {
