@@ -19,4 +19,9 @@
 
 # Go workspace file
 go.work
+
+# Go build output
+build/
+
+# still relevant?
 portfolio/tmp/main
