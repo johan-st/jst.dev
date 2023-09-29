@@ -1,0 +1,148 @@
+body {
+  background-color: var(--clr-background);
+  color: var(--clr-text);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  margin: 0 auto;
+  max-width: 1080px;
+  width: 95%;
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--clr-primary);
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+h3 {
+  font-size: 1.1rem;
+}
+
+a {
+  color: var(--clr-primary);
+  text-decoration: none;
+}
+
+a:visited {
+  color: var(--clr-primary);
+}
+
+a.link {
+  color: var(--clr-primary);
+  text-decoration: none;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  border: 1px solid var(--clr-border);
+  border-radius: 0.5rem;
+}
+
+a.link:hover,
+a.link:active {
+  border-color: var(--clr-secondary);
+  text-decoration: underline;
+
+}
+
+a.link.active {
+  border-color: var(--clr-primary);
+  font-weight: bold;
+}
+
+header {
+  height: 150px;
+  display: grid;
+  grid-template:
+    "logo nav" 1fr /
+    1fr auto;
+  ;
+  align-items: center;
+}
+
+header>.logo {
+  grid-area: "logo";
+}
+
+header>nav {
+  grid-area: "nav";
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+main>div:first-of-type {
+  border: 1px solid var(--clr-border);
+  border-radius: var(--border-radius);
+  padding: 1rem 2rem;
+}
+textarea {
+  width: 100%;
+  min-height: 10rem;
+  background: #222;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--border-radius);
+  color: var(--clr-text);
+  padding: .5rem .75rem;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+.translation__form-container {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0 2rem;
+}
+
+input {
+  color: var(--clr-background);
+  background: var(--clr-secondary);
+  border: 1px solid var(--clr-primary);
+  font-size: 1.2rem;
+  margin: 1rem;
+}
+.translation__form-input-container>input[type=select] {
+  margin-right: auto;
+}
+
+.translation__divider {
+  width: 100%;
+  height: 0px;
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.spinner {
+  width: 0;
+  height: 0;
+  position: relative;
+  left: calc(50% - 3rem);
+  top: -20px;
+}
+
+.spinner>svg {
+  fill: var(--clr-secondary);
+  width: 6rem;
+  height: 6rem;
+}
+footer {
+  text-align: center;
+  margin-left: 0;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}

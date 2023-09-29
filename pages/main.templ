@@ -1,0 +1,90 @@
+package pages
+
+
+
+
+type Data struct {
+	DocTitle 	string
+	Metadata 	map[string]string
+	TopNav 		[]Link
+	FooterLinks []Link
+	StyleInline templ.Component
+    StyleTheme  templ.Component
+}
+
+templ Layout(data Data, content templ.Component){
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        @meta(data.Metadata)
+        <script src="/static/htmx.min.js"></script>
+        <title>{ data.DocTitle }</title>
+        {! data.StyleTheme }   
+        {! data.StyleInline }
+    </head>
+    <body>
+        @header(data.TopNav)
+        <main>
+            {! content }
+        </main>
+        @footer(data.FooterLinks)
+    </body>
+    </html>
+}
+
+
+
+
+templ header(navLinks []Link) {
+    <header>
+        <div class="logo">
+            <h1><a hx-boost="true" href="/">home</a></h1>
+        </div>
+        @nav(navLinks)
+    </header>
+}
+
+
+
+templ nav(links []Link){
+    <nav hx-boost="true">
+        for _, l := range links {
+            @link(l)
+        }
+    </nav>
+}
+
+
+templ footer(links []Link) {
+    <style>
+        footer {
+            text-align: center;
+            margin-left: 0;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+    </style>
+    <footer>
+        for _, l := range links {
+            @link(l)
+        }
+    </footer>
+}
+
+templ meta(meta map[string]string) {
+    for key, value := range meta {
+        <meta name={ key } content={ value } />
+    }
+}
+
+
+templ NotFound() {
+    <h1>404</h1>
+    <p>Page not found</p>
+    <a href="/">Go home</a>
+}
