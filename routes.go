@@ -31,13 +31,21 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/favicon.ico", srv.handleStaticFile("content/static/favicon.ico"))
 	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("content/static", "/static/"))
 
-	// GET
-	srv.router.HandleFunc("GET", "/ai/translate", srv.handlePageAiTranslation())
-	// srv.router.HandleFunc("GET", "/ai/prompt", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/stories", srv.handleNotImplemented())
+	// AI
 	// srv.router.HandleFunc("GET", "/ai", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET", "/ai/chat", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET", "/ai/audio", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET", "/ai/stories", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET", "/ai/content-filter", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET", "/ai/tutor", srv.handleNotImplemented())
+
+	srv.router.HandleFunc("GET", "/ai/translate", srv.handlePageAiTranslation()) 
+	
+	// DOCS 
 	srv.router.HandleFunc("GET", "/docs", srv.handleDocsIndex())
 	srv.router.HandleFunc("GET", "/docs/", srv.handleDocs())
+	
+	// LANDING
 	srv.router.HandleFunc("GET", "/", srv.handleRedirect(http.StatusTemporaryRedirect, "/ai/translate"))
 
 	// POST
@@ -97,7 +105,7 @@ func (srv *server) handleDocs() http.HandlerFunc {
 				logReqPath, r.URL.Path,
 				"referer", r.Header.Values("referer"),
 			)
-			content = pages.Docs404(&srv.availableDocs)
+			content = pages.Blog404(&srv.availableDocs)
 		}
 
 		err = pages.Layout(pageData, content).Render(r.Context(), w)
@@ -145,7 +153,7 @@ func (srv *server) handlePageAiTranslation() http.HandlerFunc {
 
 		session = gosession.Start(&w, r)
 		trans := sessionHandler.getTranslations(&session)
-		content = pages.OpenAI(trans)
+		content = pages.OpenAiTranslate(trans)
 
 		layout := pages.Layout(pageData, content)
 		err = layout.Render(r.Context(), w)

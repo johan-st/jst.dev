@@ -5,7 +5,51 @@ import (
     ai "github.com/sashabaranov/go-openai"
 )
 
-templ OpenAI(trans []Translation) {
+// OPEN PROMPT PAGE
+
+type Chat struct {
+    req ai.ChatCompletionRequest
+    res ai.ChatCompletionResponse
+    choices ai.AudioRequest
+}
+
+templ OpenAiChat(chat Chat){
+ <div class="translation__form-container">
+        <form class="translation__form"
+                hx-post="/ai/translate"
+                hx-target="#translation"
+                hx-indicator="#spinner"
+                >                      
+            <h3>Text to translate:</h3> 
+            <label for="text">prompt:</label>                                     
+            <textarea id="text" name="text" rows="4" cols="50"></textarea>      
+            <div class="translation__form-input-container">
+                <label for="target_lang">Target Language:</label>    
+                <select id="target_lang" name="target_lang">
+                    <option value="Swedish" selected>Swedish</option>
+                    <option value="English">English</option>
+                    <option value="Danish">Danish</option>
+                    <option value="Finnish">Finnish</option>
+                    <option value="French">French</option>
+                    <option value="Dutch">Dutch</option>
+                    <option value="German">German</option>
+                </select>    
+
+                 <label for="model">language model:</label>    
+                <select id="model" name="model">
+                    <option value={ai.GPT3Dot5Turbo} selected>chatGTP 3.5 turbo (fast and almost as good)</option>
+                    <option value={ai.GPT4}>chatGPT 4 (slower but better)</option>
+                </select>     
+                <input class="button" type="submit" value="Translate" 
+                    hx-disabled-elt="this"/>
+            </div>                          
+        </form>  
+    </div>
+}
+
+// TRANSLATION PAGE
+
+templ OpenAiTranslate(trans []Translation) {
     <div class="translation__form-container">
         <form class="translation__form"
                 hx-post="/ai/translate"

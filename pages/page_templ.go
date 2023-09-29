@@ -99,7 +99,7 @@ func Blog(pages *[]Page) templ.Component {
 	})
 }
 
-func Docs404(pages *[]Page) templ.Component {
+func Blog404(pages *[]Page) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {

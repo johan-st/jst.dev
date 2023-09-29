@@ -14,7 +14,15 @@ import (
 	ai "github.com/sashabaranov/go-openai"
 )
 
-func OpenAI(trans []Translation) templ.Component {
+// OPEN PROMPT PAGE
+
+type Chat struct {
+	req     ai.ChatCompletionRequest
+	res     ai.ChatCompletionResponse
+	choices ai.AudioRequest
+}
+
+func OpenAiChat(chat Chat) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
 		templBuffer, templIsBuffer := w.(*bytes.Buffer)
 		if !templIsBuffer {
@@ -160,6 +168,165 @@ func OpenAI(trans []Translation) templ.Component {
 		if err != nil {
 			return err
 		}
+		_, err = templBuffer.WriteString("</option></select><input class=\"button\" type=\"submit\" value=\"Translate\" hx-disabled-elt=\"this\"></div></form></div>")
+		if err != nil {
+			return err
+		}
+		if !templIsBuffer {
+			_, err = templBuffer.WriteTo(w)
+		}
+		return err
+	})
+}
+
+// TRANSLATION PAGE
+
+func OpenAiTranslate(trans []Translation) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
+		templBuffer, templIsBuffer := w.(*bytes.Buffer)
+		if !templIsBuffer {
+			templBuffer = templ.GetBuffer()
+			defer templ.ReleaseBuffer(templBuffer)
+		}
+		ctx = templ.InitializeContext(ctx)
+		var_15 := templ.GetChildren(ctx)
+		if var_15 == nil {
+			var_15 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		_, err = templBuffer.WriteString("<div class=\"translation__form-container\"><form class=\"translation__form\" hx-post=\"/ai/translate\" hx-target=\"#translation\" hx-indicator=\"#spinner\"><h3>")
+		if err != nil {
+			return err
+		}
+		var_16 := `Text to translate:`
+		_, err = templBuffer.WriteString(var_16)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</h3><label for=\"text\">")
+		if err != nil {
+			return err
+		}
+		var_17 := `prompt:`
+		_, err = templBuffer.WriteString(var_17)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</label><textarea id=\"text\" name=\"text\" rows=\"4\" cols=\"50\"></textarea><div class=\"translation__form-input-container\"><label for=\"target_lang\">")
+		if err != nil {
+			return err
+		}
+		var_18 := `Target Language:`
+		_, err = templBuffer.WriteString(var_18)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</label><select id=\"target_lang\" name=\"target_lang\"><option value=\"Swedish\" selected>")
+		if err != nil {
+			return err
+		}
+		var_19 := `Swedish`
+		_, err = templBuffer.WriteString(var_19)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option><option value=\"English\">")
+		if err != nil {
+			return err
+		}
+		var_20 := `English`
+		_, err = templBuffer.WriteString(var_20)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option><option value=\"Danish\">")
+		if err != nil {
+			return err
+		}
+		var_21 := `Danish`
+		_, err = templBuffer.WriteString(var_21)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option><option value=\"Finnish\">")
+		if err != nil {
+			return err
+		}
+		var_22 := `Finnish`
+		_, err = templBuffer.WriteString(var_22)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option><option value=\"French\">")
+		if err != nil {
+			return err
+		}
+		var_23 := `French`
+		_, err = templBuffer.WriteString(var_23)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option><option value=\"Dutch\">")
+		if err != nil {
+			return err
+		}
+		var_24 := `Dutch`
+		_, err = templBuffer.WriteString(var_24)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option><option value=\"German\">")
+		if err != nil {
+			return err
+		}
+		var_25 := `German`
+		_, err = templBuffer.WriteString(var_25)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option></select><label for=\"model\">")
+		if err != nil {
+			return err
+		}
+		var_26 := `language model:`
+		_, err = templBuffer.WriteString(var_26)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</label><select id=\"model\" name=\"model\"><option value=\"")
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString(templ.EscapeString(ai.GPT3Dot5Turbo))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("\" selected>")
+		if err != nil {
+			return err
+		}
+		var_27 := `chatGTP 3.5 turbo (fast and almost as good)`
+		_, err = templBuffer.WriteString(var_27)
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("</option><option value=\"")
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString(templ.EscapeString(ai.GPT4))
+		if err != nil {
+			return err
+		}
+		_, err = templBuffer.WriteString("\">")
+		if err != nil {
+			return err
+		}
+		var_28 := `chatGPT 4 (slower but better)`
+		_, err = templBuffer.WriteString(var_28)
+		if err != nil {
+			return err
+		}
 		_, err = templBuffer.WriteString("</option></select><input class=\"button\" type=\"submit\" value=\"Translate\" hx-disabled-elt=\"this\"></div></form></div><div id=\"translation\">")
 		if err != nil {
 			return err
@@ -192,9 +359,9 @@ func Translated(trans []Translation) templ.Component {
 			defer templ.ReleaseBuffer(templBuffer)
 		}
 		ctx = templ.InitializeContext(ctx)
-		var_15 := templ.GetChildren(ctx)
-		if var_15 == nil {
-			var_15 = templ.NopComponent
+		var_29 := templ.GetChildren(ctx)
+		if var_29 == nil {
+			var_29 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		err = spinner("spinner").Render(ctx, templBuffer)
@@ -210,13 +377,13 @@ func Translated(trans []Translation) templ.Component {
 			if err != nil {
 				return err
 			}
-			var_16 := `Translation `
-			_, err = templBuffer.WriteString(var_16)
+			var_30 := `Translation `
+			_, err = templBuffer.WriteString(var_30)
 			if err != nil {
 				return err
 			}
-			var var_17 string = fmt.Sprintf("%d", len(trans)-i)
-			_, err = templBuffer.WriteString(templ.EscapeString(var_17))
+			var var_31 string = fmt.Sprintf("%d", len(trans)-i)
+			_, err = templBuffer.WriteString(templ.EscapeString(var_31))
 			if err != nil {
 				return err
 			}
@@ -229,8 +396,8 @@ func Translated(trans []Translation) templ.Component {
 				if err != nil {
 					return err
 				}
-				var_18 := `nothing yet...`
-				_, err = templBuffer.WriteString(var_18)
+				var_32 := `nothing yet...`
+				_, err = templBuffer.WriteString(var_32)
 				if err != nil {
 					return err
 				}
@@ -243,8 +410,8 @@ func Translated(trans []Translation) templ.Component {
 			if err != nil {
 				return err
 			}
-			var var_19 string = tran.Choices[0]
-			_, err = templBuffer.WriteString(templ.EscapeString(var_19))
+			var var_33 string = tran.Choices[0]
+			_, err = templBuffer.WriteString(templ.EscapeString(var_33))
 			if err != nil {
 				return err
 			}
