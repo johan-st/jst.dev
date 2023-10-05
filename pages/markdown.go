@@ -20,15 +20,6 @@ var (
 	once sync.Once
 )
 
-type PageMeta map[string]interface{}
-
-type Page struct {
-	Title string
-	Body  []byte
-	Path  string
-	PageMeta
-}
-
 func (p Page) Render(ctx context.Context, w io.Writer) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
@@ -36,7 +27,15 @@ func (p Page) Render(ctx context.Context, w io.Writer) error {
 	return md.Convert(p.Body, w)
 }
 
-func MdToPage(file []byte, baseUrl string) (Page, error) {
+
+func (p BlogPost) Render(ctx context.Context, w io.Writer) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return md.Convert(p.Body, w)
+}
+
+func MdToPage(file []byte, baseUrl string) (BlogPost, error) {
 	// setup markdown parser
 	once.Do(func() {
 		md = goldmark.New(
@@ -71,22 +70,22 @@ func MdToPage(file []byte, baseUrl string) (Page, error) {
 	metaData := document.OwnerDocument().Meta()
 	title, ok := metaData["title"]
 	if !ok {
-		return Page{}, fmt.Errorf("no title found on post. file starts %s", file[:100])
+		return BlogPost{}, fmt.Errorf("no title found on post. File:\n%s", file[:min(100, len(file))])
 	}
 	switch title.(type) {
 	case string:
 	default:
-		return Page{}, fmt.Errorf("title is not a string. file starts %s", file[:100])
+		return BlogPost{}, fmt.Errorf("title is not a string. File: \n%s", file[:min(100, len(file))])
 	}
 
 	slug, ok := metaData["path"]
 	if !ok {
-		return Page{}, fmt.Errorf("no path found on post. file starts %s", file[:100])
+		return BlogPost{}, fmt.Errorf("no path found on post. File: \n%s", file[:min(100, len(file))])
 	}
 	switch slug.(type) {
 	case string:
 	default:
-		return Page{}, fmt.Errorf("path is not a string. file starts %s", file[:100])
+		return BlogPost{}, fmt.Errorf("path is not a string. File: \n%s", file[:min(100, len(file))])
 	}
 
 	// make sure we DON'T have a trailing slash
@@ -100,10 +99,19 @@ func MdToPage(file []byte, baseUrl string) (Page, error) {
 	buf := &bytes.Buffer{}
 	md.Convert(file, buf)
 
-	return Page{
+	return BlogPost{
 		Title:    title.(string), // we checked
 		Body:     buf.Bytes(),
 		Path:     baseUrl + slug.(string), // we checked
-		PageMeta: metaData,
+		BlogMeta: metaData,
 	}, nil
+}
+
+// HELPERS
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

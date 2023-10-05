@@ -1,0 +1,111 @@
+package pages
+
+import "fmt"
+
+type BlogMeta map[string]interface{}
+
+type BlogPost struct {
+	Title string
+	Body  []byte
+	Path  string
+	BlogMeta
+}
+
+templ BlogContent(p BlogPost) {
+    <h1>{p.Title}</h1>
+    <div class="content" id={"bost_"+p.Path}> 
+        {! p }
+    </div>	
+}
+
+templ BlogIndex(pages *[]BlogPost) {
+    <h1>Docs</h1>
+    <div> 
+        @listPosts(pages)
+    </div>
+}
+
+templ Blog404(pages *[]BlogPost) {
+    <h1>404</h1>
+    <p>This article does not exist..  Here are some alternatives</p>
+    @listPosts(pages)
+}
+
+
+
+templ listPosts(pages *[]BlogPost) {
+    <style>
+        .page-list {
+            list-style: none;
+            padding: 0;
+        }
+        .page-list li:last-child {
+            border: none;
+        }
+        .page-list li h3 {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--clr-primary);
+            margin: 0;
+        }
+        .page-list li a {
+            margin-bottom: 1em;
+            padding: 1em;
+            background: var(--clr-background-alt);
+            border-radius: var(--border-radius);
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: block;
+            color: var(--clr-text);
+            // transition: all 0.2s ease-in-out;
+        }
+        .page-list li a:hover {
+            // box-shadow: var(--shadow-glow);
+            // box-shadow: var(--shadow);
+            border: 1px solid var(--clr-secondary);
+            // transform: scale(1.01);
+        }
+        .page-list li a:hover>h3 {
+            text-decoration: underline;
+            text-decoration-color: var(--clr-secondary);
+        }
+        .page-list li .date {
+            margin-top: 0;
+            font-size: 0.8em;
+        }
+        .page-list .meta-key {
+            margin-top: 1rem;
+            font-weight: 100;
+            color: var(--clr-text-muted);
+            display:block;
+        }
+
+    </style>
+    <ul hx-boost="true" class="page-list">
+        for _, p := range *pages {
+            <li>
+                <a href={templ.SafeURL(p.Path)}>
+                <h3>{p.Title}</h3>
+                if v, ok := p.BlogMeta["date"]; ok {
+                    <div class="date">{fmt.Sprintf("%v",v) }</div>
+                } 
+                if v, ok := p.BlogMeta["description"]; ok {
+                    <div><span class="meta-key">description:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.BlogMeta["excerpt"]; ok {
+                    <div><span class="meta-key">excerpt:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.BlogMeta["embedding"]; ok {
+                    <div><span class="meta-key">embedding:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.BlogMeta["tags"]; ok {
+                    <div><span class="meta-key">tags:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.BlogMeta["keywords"]; ok {
+                    <div><span class="meta-key">keywords:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                </a>
+            </li>
+        }
+    </ul>
+}

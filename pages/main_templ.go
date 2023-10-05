@@ -39,7 +39,7 @@ func Layout(data Data, content templ.Component) templ.Component {
 		if err != nil {
 			return err
 		}
-		_, err = templBuffer.WriteString("<script src=\"/static/htmx.min.js\">")
+		_, err = templBuffer.WriteString("<script src=\"/public/htmx.min.js\">")
 		if err != nil {
 			return err
 		}
