@@ -1,5 +1,7 @@
 package pages
 
+import "fmt"
+
 templ Content(p Page) {
     <h1>{p.Title}</h1>
     <div class="content" id={"page_"+p.Path}> 
@@ -20,10 +22,81 @@ templ Blog404(pages *[]Page) {
     @listPages(pages)
 }
 
+
+
 templ listPages(pages *[]Page) {
-    <ul hx-boost="true">
+    <style>
+        .page-list {
+            list-style: none;
+            padding: 0;
+        }
+        .page-list li:last-child {
+            border: none;
+        }
+        .page-list li h3 {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--clr-primary);
+            margin: 0;
+        }
+        .page-list li a {
+            margin-bottom: 1em;
+            padding: 1em;
+            background: var(--clr-background-alt);
+            border-radius: var(--border-radius);
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: block;
+            color: var(--clr-text);
+            // transition: all 0.2s ease-in-out;
+        }
+        .page-list li a:hover {
+            // box-shadow: var(--shadow-glow);
+            // box-shadow: var(--shadow);
+            border: 1px solid var(--clr-secondary);
+            // transform: scale(1.01);
+        }
+        .page-list li a:hover>h3 {
+            text-decoration: underline;
+            text-decoration-color: var(--clr-secondary);
+        }
+        .page-list li .date {
+            margin-top: 0;
+            font-size: 0.8em;
+        }
+        .page-list .meta-key {
+            margin-top: 1rem;
+            font-weight: 100;
+            color: var(--clr-text-muted);
+            display:block;
+        }
+
+    </style>
+    <ul hx-boost="true" class="page-list">
         for _, p := range *pages {
-            <li><a href={templ.SafeURL(p.Path)}>{p.Title}</a></li>
+            <li>
+                <a href={templ.SafeURL(p.Path)}>
+                <h3>{p.Title}</h3>
+                if v, ok := p.PageMeta["date"]; ok {
+                    <div class="date">{fmt.Sprintf("%v",v) }</div>
+                } 
+                if v, ok := p.PageMeta["description"]; ok {
+                    <div><span class="meta-key">description:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.PageMeta["excerpt"]; ok {
+                    <div><span class="meta-key">excerpt:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.PageMeta["embedding"]; ok {
+                    <div><span class="meta-key">embedding:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.PageMeta["tags"]; ok {
+                    <div><span class="meta-key">tags:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                if v, ok := p.PageMeta["keywords"]; ok {
+                    <div><span class="meta-key">keywords:</span> {fmt.Sprintf("%v",v) }</div>
+                }
+                </a>
+            </li>
         }
     </ul>
 }

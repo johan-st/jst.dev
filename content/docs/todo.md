@@ -3,6 +3,7 @@ title: To be done
 description: ToDo list for this website
 path: todo
 date: 2023-09-29
+excerpt: "This blog post outlines a comprehensive to-do list on website enhancements, ranging from handling API error codes and updating the UI, to implementing AI functionalities like translation, tutoring, keyword extraction, and review classification."
 emdeding: abcd-1234
 tags: ["todo", "website"]
 keywords: [todo, website]

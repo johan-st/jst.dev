@@ -49,10 +49,11 @@ a.link {
 }
 
 a.link:hover,
-a.link:active {
+a.link:active,
+a:focus-visible {
   border-color: var(--clr-secondary);
   text-decoration: underline;
-
+  text-decoration-color: var(--clr-secondary);
 }
 
 a.link.active {

@@ -38,12 +38,12 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/ai/content-filter", srv.handleNotImplemented())
 	srv.router.HandleFunc("GET", "/ai/stories", srv.handleNotImplemented())
 	srv.router.HandleFunc("GET", "/ai/tutor", srv.handleNotImplemented())
-	srv.router.HandleFunc("GET", "/ai/translate", srv.handlePageAiTranslation()) 
-	
-	// DOCS 
+	srv.router.HandleFunc("GET", "/ai/translate", srv.handlePageAiTranslation())
+
+	// DOCS
 	srv.router.HandleFunc("GET", "/docs", srv.handleDocsIndex())
 	srv.router.HandleFunc("GET", "/docs/", srv.handleDocs())
-	
+
 	// LANDING
 	srv.router.HandleFunc("GET", "/", srv.handleRedirect(http.StatusTemporaryRedirect, "/ai/translate"))
 
@@ -484,11 +484,13 @@ func defaultPageData() (pages.Data, error) {
 
 func defaultTheme() pages.Theme {
 	return pages.Theme{
-		ColorPrimary:    "#f90",
-		ColorSecondary:  "#fa3",
-		ColorBackground: "#333",
-		ColorText:       "#aaa",
-		ColorBorder:     "#666",
-		BorderRadius:    "1rem",
+		ColorPrimary:       "#f90",
+		ColorSecondary:     "#fc0",
+		ColorBackground:    "#333",
+		ColorBackgroundAlt: "#202020",
+		ColorText:          "#aaa",
+		ColorTextMuted:     "#666",
+		ColorBorder:        "#666",
+		BorderRadius:       "1rem",
 	}
 }

@@ -10,12 +10,14 @@ import (
 )
 
 type Theme struct {
-	ColorPrimary    string
-	ColorSecondary  string
-	ColorBackground string
-	ColorText       string
-	ColorBorder     string
-	BorderRadius    string
+	ColorPrimary       string
+	ColorSecondary     string
+	ColorBackground    string
+	ColorBackgroundAlt string
+	ColorText          string
+	ColorTextMuted     string
+	ColorBorder        string
+	BorderRadius       string
 }
 
 func (t Theme) Component() (templ.Component, error) {
@@ -28,8 +30,14 @@ func (t Theme) Component() (templ.Component, error) {
 	if t.ColorBackground == "" {
 		return nil, errors.New("ColorBackground is required")
 	}
+	if t.ColorBackgroundAlt == "" {
+		return nil, errors.New("ColorBackgroundAlt is required")
+	}
 	if t.ColorText == "" {
 		return nil, errors.New("ColorText is required")
+	}
+	if t.ColorTextMuted == "" {
+		return nil, errors.New("ColorMuted is required")
 	}
 	if t.ColorBorder == "" {
 		return nil, errors.New("ColorBorder is required")
@@ -46,13 +54,14 @@ func (t Theme) Component() (templ.Component, error) {
 			str.WriteString("--clr-primary:" + t.ColorPrimary + ";")
 			str.WriteString("--clr-secondary: " + t.ColorSecondary + ";")
 			str.WriteString("--clr-background: " + t.ColorBackground + ";")
+			str.WriteString("--clr-background-alt: " + t.ColorBackgroundAlt + ";")
 			str.WriteString("--clr-text: " + t.ColorText + ";")
+			str.WriteString("--clr-text-muted: " + t.ColorTextMuted + ";")
 			str.WriteString("--clr-border: " + t.ColorBorder + ";")
 			str.WriteString("--border-radius: " + t.BorderRadius + ";")
+			str.WriteString("--shadow-glow: 0px 0px 10px var(--clr-secondary);")
+			str.WriteString("--shadow: 4px 2px 8px var(--clr-secondary);")
 			str.WriteString("}</style>")
-			str.WriteString("<style type=\"text/css\">")
-			str.WriteString("}</style>")
-
 			io.WriteString(w, str.String())
 			return nil
 		}), nil
