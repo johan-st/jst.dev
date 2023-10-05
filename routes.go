@@ -29,7 +29,7 @@ func (srv *server) prepareRoutes() {
 
 	// STATIC ASSETS
 	srv.router.HandleFunc("GET", "/favicon.ico", srv.handleStaticFile("content/assets/favicon.ico"))
-	srv.router.HandleFunc("GET", "/public/", srv.handleStaticDir("content/public", "/public/"))
+	srv.router.HandleFunc("GET", "/public/", srv.handlePublicDir("content/public", "/public/"))
 
 	// AI
 	srv.router.HandleFunc("GET", "/ai", srv.handleRedirect(http.StatusTemporaryRedirect, "/ai/translate"))
@@ -242,10 +242,10 @@ func (srv *server) handleBlogIndex() http.HandlerFunc {
 	}
 }
 
-func (srv *server) handleStaticDir(rootDir, basePath string) http.HandlerFunc {
+func (srv *server) handlePublicDir(rootDir, basePath string) http.HandlerFunc {
 	// timing and logging
 	l := srv.l.
-		WithPrefix(srv.l.GetPrefix()+".StaticDir").
+		WithPrefix(srv.l.GetPrefix()+".PublicDir").
 		With(
 			logRootDir, rootDir,
 			logBaseURL, basePath,
@@ -259,17 +259,16 @@ func (srv *server) handleStaticDir(rootDir, basePath string) http.HandlerFunc {
 	}(time.Now())
 
 	// setup
-	subFs, err := fs.Sub(embededFileSystem, rootDir)
+	PublicFs, err := fs.Sub(embededFileSystem, rootDir)
 	if err != nil {
 		l.Fatal(
 			"load filesystem",
 			"err", err,
 		)
 	}
-	fileSrv := http.FileServer(http.FS(subFs))
+	fileSrv := http.FileServer(http.FS(PublicFs))
 
 	// handler
-	// return http.FileServer(http.FS(staticFS))
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func(t time.Time) {
 			l.Debug(
