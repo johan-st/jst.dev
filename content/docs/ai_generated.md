@@ -2,6 +2,7 @@
 title: Text in the machine
 description: ChatGPT-4 introduces itself and explains its abilities
 path: ai_generated-1
+excerpt: "ChatGPT-4, the latest advancement in OpenAI's GPT series, soars to new heights by leveraging internet information to provide enriched, engaging, and productive interactions across a multitude of applications and enhanced features, truly embodying the potential of intelligent machines."
 ---
 **Prompt**: you are chatGPT-4. Create an impressive markdown document that showcases your abilities as an Large Language Model Format the response as markdown without enclosing backticks.
 

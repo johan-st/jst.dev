@@ -32,13 +32,12 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET", "/static/", srv.handleStaticDir("content/static", "/static/"))
 
 	// AI
-	// srv.router.HandleFunc("GET", "/ai", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/chat", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/audio", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/stories", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/content-filter", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/tutor", srv.handleNotImplemented())
-
+	srv.router.HandleFunc("GET", "/ai", srv.handleNotImplemented())
+	srv.router.HandleFunc("GET", "/ai/audio", srv.handleNotImplemented())
+	srv.router.HandleFunc("GET", "/ai/chat", srv.handleNotImplemented())
+	srv.router.HandleFunc("GET", "/ai/content-filter", srv.handleNotImplemented())
+	srv.router.HandleFunc("GET", "/ai/stories", srv.handleNotImplemented())
+	srv.router.HandleFunc("GET", "/ai/tutor", srv.handleNotImplemented())
 	srv.router.HandleFunc("GET", "/ai/translate", srv.handlePageAiTranslation()) 
 	
 	// DOCS 
