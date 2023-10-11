@@ -121,7 +121,7 @@ func header(navLinks []Link) templ.Component {
 		if err != nil {
 			return err
 		}
-		var_5 := `home`
+		var_5 := `Johan Strand`
 		_, err = templBuffer.WriteString(var_5)
 		if err != nil {
 			return err
