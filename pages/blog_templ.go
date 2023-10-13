@@ -182,17 +182,17 @@ func listPosts(pages *[]BlogPost) templ.Component {
             border: none;
         }
         .page-list li h3 {
-            font-size: 1.2em;
+            font-size: 1.2rem;
             font-weight: bold;
             color: var(--clr-primary);
             margin: 0;
         }
         .page-list li a {
-            margin-bottom: 1em;
-            padding: 1em;
+            margin-bottom: 1rem;
+            padding: 1rem;
             background: var(--clr-background-alt);
             border-radius: var(--border-radius);
-            border: 1px solid transparent;
+            border: .1rem solid transparent;
             text-decoration: none;
             display: block;
             color: var(--clr-text);
@@ -201,7 +201,7 @@ func listPosts(pages *[]BlogPost) templ.Component {
         .page-list li a:hover {
             // box-shadow: var(--shadow-glow);
             // box-shadow: var(--shadow);
-            border: 1px solid var(--clr-secondary);
+            border: .1rem solid var(--clr-secondary);
             // transform: scale(1.01);
         }
         .page-list li a:hover>h3 {
@@ -210,7 +210,7 @@ func listPosts(pages *[]BlogPost) templ.Component {
         }
         .page-list li .date {
             margin-top: 0;
-            font-size: 0.8em;
+            font-size: 0.8rem;
         }
         .page-list .meta-key {
             margin-top: 1rem;

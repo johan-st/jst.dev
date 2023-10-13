@@ -1,12 +1,20 @@
-body {
+:root{
+  --border: 4px solid var(--clr-border);
+}
+html {
   background-color: var(--clr-background);
   color: var(--clr-text);
   font-family: 'Courier New', Courier, monospace;
-  font-size: 18px;
-  margin: 0 auto;
+  font-size: 18pt;
+  margin: 0 0;
+  padding: 0;
   max-width: 1080px;
   width: 95%;
   box-sizing: border-box;
+}
+body {
+  font-size: 1rem;
+  
 }
 
 h1,
@@ -44,7 +52,7 @@ a.link {
   text-decoration: none;
   padding: 0.5rem;
   margin: 0.5rem;
-  border: 1px solid var(--clr-border);
+  border: var(--border);
   border-radius: 0.5rem;
 }
 
@@ -62,28 +70,32 @@ a.link.active {
 }
 
 header {
-  height: 150px;
   display: grid;
   grid-template:
-    "logo nav" 1fr /
-    1fr auto;
+    "logo"auto 
+    "nav" auto / 
+    1fr;
   ;
   align-items: center;
 }
 
 header>.logo {
-  grid-area: "logo";
+  grid-area: logo;
+}
+header>.logo h1 {
+  font-size: 5rem;
+  margin: 0;
+  padding: 1rem;
 }
 
 header>nav {
-  grid-area: "nav";
-  margin-left: auto;
-  display: flex;
-  align-items: center;
+  grid-area: nav;
+  display: grid;
+  grid-auto-flow: column;
 }
 
 main>div:first-of-type {
-  border: 1px solid var(--clr-border);
+  border: var(--border);
   border-radius: var(--border-radius);
   padding: 1rem 2rem;
 }
@@ -91,7 +103,7 @@ textarea {
   width: 100%;
   min-height: 10rem;
   background: #222;
-  border: 1px solid var(--clr-border);
+  border: var(--border);
   border-radius: var(--border-radius);
   color: var(--clr-text);
   padding: .5rem .75rem;
@@ -110,7 +122,7 @@ textarea:focus {
 input {
   color: var(--clr-background);
   background: var(--clr-secondary);
-  border: 1px solid var(--clr-primary);
+  border: var(--border);
   font-size: 1.2rem;
   margin: 1rem;
 }
