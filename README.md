@@ -19,6 +19,8 @@ documentation of services, portfolio, infrastructure administration, and other p
 | [Git Server](#git-server)           |      ssh | `git.jst.dev`    | git server                     | [charm.sh](https://charm.sh/) |                     no                     |
 | [Status (ssh)](#status-ssh)         |      ssh | `status.jst.dev` | ssh a dashboard for the server |              me               |                     no                     |
 | [gRPC](#gRPC)                       |     http | `grpc.jst.dev`   | a gRPC server                  |              me               |                     no                     |
+| [auth](#auth)                       |     http | `auth.jst.dev`   | authentication server          |              me               |                     no                     |
+
 
 ## Infrastructure
 
@@ -79,3 +81,8 @@ buildt with Elm.
 
 - This is a far future maybe. Might be a good way to learn gRPC.
 - Considering using this behind the scenes for the API and ssh applications.
+
+# auth
+
+- I will start with a simplistic auth server for just me. I will use it to learn about authentication and authorization.
+- i will set this up as a microservice and use it for the other services.
