@@ -1,0 +1,36 @@
+<script>
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖ-_.";
+    const matches = document.querySelectorAll(".hacker-link");
+
+    let intervals = [];
+
+    matches.forEach((hl, i) => {
+        hl.onmouseover = (event) => {
+            let iteration = 0;
+            const delayIter = 3;
+
+            clearInterval(intervals[i]);
+
+            intervals[i] = setInterval(() => {
+                event.target.innerText = event.target.innerText
+                    .split("")
+                    .map((letter, index) => {
+                        if (index < iteration) {
+                            return event.target.dataset.value[index];
+                        }
+
+                        return letters[Math.floor(Math.random() * letters.length)];
+                    })
+                    .join("");
+
+                if (iteration >= event.target.dataset.value.length) {
+                    clearInterval(intervals[i]);
+                }
+
+                iteration += 1 / delayIter;
+            },
+                1000/30);
+        };
+    });
+
+</script>
