@@ -3,11 +3,12 @@ package main
 import (
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/gofiber/template/html/v2"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
@@ -15,7 +16,9 @@ import (
 func main() {
 	log.SetLevel(log.LevelTrace)
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		Views: html.New("./content/view", ".html"),
+	})
 	app.Use(requestid.New())
 	app.Use(newLogger())
 	app.Use(pprof.New())
@@ -33,10 +36,10 @@ func main() {
 // HANDLERS
 
 func handleIndex(c *fiber.Ctx) error {
-	c.Te
-	return c.SendString("Hello, World!")
+	return c.Render("index", fiber.Map{
+		"Title": "Hello, World!",
+	}, "layout/main")
 }
-
 func handleAbout(c *fiber.Ctx) error {
 	return c.SendString("About")
 }
@@ -57,10 +60,7 @@ func newMonitor() fiber.Handler {
 
 func newLogger() fiber.Handler {
 	return logger.New(logger.Config{
-		TimeFormat:    "2006-01-02 15:04:05",
-		TimeZone:      "Sweden/Stockholm",
-		TimeInterval:  0,
-		Output:        nil,
-		DisableColors: false,
+		TimeFormat: "2006-01-02 15:04:05",
+		TimeZone:   "UTC",
 	})
 }
