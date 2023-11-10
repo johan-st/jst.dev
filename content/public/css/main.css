@@ -1,0 +1,152 @@
+:root {
+    --clr-1: #222831;
+    --clr-2: #393E46;
+    --clr-3: #00ADB5;
+    --clr-4: #f80;
+    --clr-5: #EEEEEE;
+
+    --clr-bg: var(--clr-1);
+    --clr-muted: var(--clr-2);
+    --clr-primary: var(--clr-4);
+    --clr-accent: var(--clr-3);
+    --clr-text: var(--clr-5);
+
+}
+
+.clr-alt {
+    --clr-bg: var(--clr-4);
+    --clr-muted: var(--clr-5);
+    --clr-primary: var(--clr-1);
+    --clr-accent: #000;
+    --clr-text: var(--clr-2);
+}
+
+.clr-alt a {
+    text-decoration: underline;
+}
+
+body {
+    margin: 0;
+    background-color: var(--clr-bg);
+    color: var(--clr-text);
+    font-family: 'Roboto', sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+    border-color: var(--clr-primary);
+    display: grid;
+    grid-template-areas:
+        "header"
+        "body"
+        "footer";
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--clr-primary);
+    margin: 0;
+}
+
+p,
+a {
+    margin: 0;
+}
+
+a {
+    color: var(--clr-accent);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--clr-primary);
+}
+
+
+
+header {
+    grid-area: header;
+    /* border-bottom: 1px solid; */
+    background-color: var(--clr-muted);
+    display: grid;
+    grid-template:
+        "logo search _" max-content
+        "logo nav _" /
+        200px 1fr 200px
+}
+
+header>.logo {
+    grid-area: logo;
+    width: fit-content;
+    margin: 0 auto;
+    line-height: 2;
+}
+
+header>.search {
+    grid-area: search;
+    text-align: end;
+}
+
+header>nav {
+    grid-area: nav;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    align-items: center;
+}
+
+nav>a {
+    text-decoration: none;
+    color: var(--clr-primary);
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--clr-bg);
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    background-color: var(--clr-muted);
+    transition: background-color 0.1s ease-in-out;
+}
+
+nav>a:hover {
+    background-color: var(--clr-primary);
+    color: var(--clr-bg);
+}
+
+nav>a.active {
+    background-color: var(--clr-bg);
+    color: var(--clr-text);
+    pointer-events: none;
+}
+
+main {
+    grid-area: body;
+}
+
+section {
+    padding: 2rem 0 2rem;
+}
+
+
+.content-grid {
+    display: grid;
+    grid-template-columns:
+        [full-width-start] 100px [breakout-start] 100px [content-start] 1fr [content-end] 100px [breakout-end] 100px [full-width-end];
+    background-color: var(--clr-bg);
+    color: var(--clr-text);
+}
+
+.content-grid>* {
+    grid-column: content;
+}
+
+.breakout {
+    grid-column: breakout;
+    border: 2px solid var(--clr-4);
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.full-width {
+    grid-column: full-width;
+}
