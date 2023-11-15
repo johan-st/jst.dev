@@ -22,3 +22,10 @@ go.work
 
 # air
 tmp
+
+# exclude fonts
+*.woff
+*.woff2
+*.ttf
+*.otf
+

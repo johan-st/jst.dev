@@ -8,13 +8,16 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func routes(l *log.Logger) *http.ServeMux {
-
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", handleHome(l))
+	mux.HandleFunc("/", handleGzip(l, gzip.DefaultCompression,
+		handleHome(l),
+	))
+
 	mux.HandleFunc("/favicon.ico", handleFile(l, "./content/public/favicon.ico"))
 	mux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./content/public")))) //TODO: do not list files
 
@@ -149,4 +152,66 @@ func gzipBytes(bs []byte) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// MIDDLEWARE
+
+// GZIP middleware
+
+/*
+TODO: use pool if allocation is a problem
+
+TODO: add content types if there exists a usecase
+*/
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	minSize int // MTU is 1500 bytes, so 1400 is a good value
+	level   int // gzip compression level
+	// contentTypes []string //
+}
+
+func (w *gzipResponseWriter) Header() http.Header {
+	return w.ResponseWriter.Header()
+}
+
+func (w *gzipResponseWriter) WriteHeader(statusCode int) {
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *gzipResponseWriter) Write(bs []byte) (int, error) {
+	if len(bs) < w.minSize {
+		return w.ResponseWriter.Write(bs)
+	}
+	w.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+
+	gz, err := gzip.NewWriterLevel(w.ResponseWriter, w.level)
+	if err != nil {
+		fmt.Println("gzipResponseWriter Write err", err)
+		return w.ResponseWriter.Write(bs)
+	}
+	defer gz.Close()
+
+	return gz.Write(bs)
+}
+
+
+func handleGzip(l *log.Logger, level int, fn http.HandlerFunc) http.HandlerFunc {
+	// create and throw away a gzip writer to check if level is valid
+	_, err := gzip.NewWriterLevel(&bytes.Buffer{}, level)
+	if err != nil {
+		l.Fatal("handleGzip: ", err)
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			zw := &gzipResponseWriter{
+				ResponseWriter: w,
+				minSize:        1400,
+				level:          level,
+			}
+			fn(zw, r)
+			return
+		}
+		fn(w, r)
+	}
 }
