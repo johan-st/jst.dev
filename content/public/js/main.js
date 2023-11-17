@@ -1,5 +1,11 @@
 function headerNavListeners() {
-    var links = document.querySelectorAll('header>nav>a');
+    const navToggle = document.querySelector('header>nav>.nav-toggle');
+    const nav = document.querySelector('header>nav');
+    navToggle.addEventListener('click', function (e) {
+        console.debug('click', e);
+        nav.classList.toggle('open');
+    });
+    const links = document.querySelectorAll('header>nav>a');
     console.debug('links', links);
     links.forEach(function (link) {
         console.debug('link', link);

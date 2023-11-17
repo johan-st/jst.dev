@@ -125,7 +125,8 @@ a:focus-visible {
 p {
     padding-bottom: 1rem;
 }
-ul{
+
+ul {
     list-style: none;
     padding: 0;
 }
@@ -165,42 +166,61 @@ body {
 header {
     grid-area: header;
     background-color: var(--clr-muted);
-    display: grid;
-    grid-template:
-        "logo search _" max-content
-        "logo nav _" /
-        200px 1fr 200px
 }
 
 header>.logo {
-    grid-area: logo;
-    width: fit-content;
-    margin: 0 auto;
     line-height: 2;
     font-size: 2rem;
     color: var(--clr-primary);
 }
 
-header>.search {
-    grid-area: search;
-    text-align: end;
-}
-
 header>nav {
-    grid-area: nav;
     display: flex;
     justify-content: center;
     gap: 1rem;
     align-items: end;
+    position: fixed;
+    flex-direction: column;
+    padding: 1rem 0 1rem 1rem;
+    font-size: 2rem;
+    right: 0;
+    transform: translateX(calc(20rem + 1rem));
+    bottom: 0px;
+    transition: transform 0.4s cubic-bezier(.18, .89, .32, 1.28);
+    backdrop-filter: blur(5px) drop-shadow(3px 4px white) brightness(50%);
+    border-radius: 1rem 0 0 0rem;
+    width: 20rem;
+}
+
+header>nav.open {
+    transform: translateX(4rem);
+}
+
+header>nav>.nav-toggle {
+    position: absolute;
+    left: -3ch;
+    padding: 1ch;
+    background: var(--clr-bg-alt);
+    border-radius: 1rem 0 0 1rem;
+    color: var(--clr-text-alt);
+    border: 2px solid var(--clr-bg);
+    transition: transform 0.4s cubic-bezier(.18, .89, .32, 1.28) .4s;
+    font-family: monospace;
+    transform: perspective(800px) translate(-4px);
+    transform-origin: right;
+}
+
+header>nav.open>.nav-toggle {
+    transform: rotateY(180deg) translate(4px);
 }
 
 header>nav>a {
     text-decoration: none;
     color: var(--clr-primary);
-    padding: 0.5rem 1rem;
+    padding: 0.5em 5rem 0.5em 1em;
     border: 1px solid var(--clr-bg);
-    border-bottom: none;
-    border-radius: 0.5rem 0.5rem 0 0;
+    border-right: none;
+    border-radius: 0.5rem 0.0rem .0rem .5rem;
     background-color: var(--clr-muted);
     transition: background-color 0.1s ease-in-out;
     width: max-content;
@@ -287,14 +307,41 @@ img.full-width {
 
 footer {
     grid-area: footer;
-    
+
     display: flex;
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
     gap: 2rem;
-    
+
 
     background: var(--clr-muted);
-    /* background: linear-gradient(180deg, var(--clr-bg) 0%, var(--clr-muted) 100%); */
+}
+
+@media screen and (min-width: 800px) {
+    header {
+        display: grid;
+        grid-template:
+            "logo nav _" /
+            200px 1fr 200px
+    }
+
+    header>.logo {
+        grid-area: logo;
+        width: fit-content;
+        margin: 0 auto;
+    }
+
+    header>nav {
+        grid-area: nav;
+        align-items: end;
+        flex-direction: row;
+    }
+
+    header>nav>a {
+        border-bottom: none;
+        border-radius: 0.5rem 0.5rem 0 0;
+
+    }
+
 }
