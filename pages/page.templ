@@ -10,7 +10,7 @@ type Page struct {
 }
 
 templ PageContent(p BlogPost) {
-    <div class="content" id={"page_"+p.Path}> 
-        {! p }
-    </div>	
+	<div class="content" id={ "page_" + p.Path }>
+		@p
+	</div>
 }

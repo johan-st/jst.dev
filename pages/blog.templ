@@ -12,29 +12,27 @@ type BlogPost struct {
 }
 
 templ BlogContent(p BlogPost) {
-    <h1>{p.Title}</h1>
-    <div class="content" id={"bost_"+p.Path}> 
-        {! p }
-    </div>	
+	<h1>{ p.Title }</h1>
+	<div class="content" id={ "bost_" + p.Path }>
+		@p
+	</div>
 }
 
 templ BlogIndex(pages *[]BlogPost) {
-    <h1>Docs</h1>
-    <div> 
-        @listPosts(pages)
-    </div>
+	<h1>Docs</h1>
+	<div>
+		@listPosts(pages)
+	</div>
 }
 
 templ Blog404(pages *[]BlogPost) {
-    <h1>404</h1>
-    <p>This article does not exist..  Here are some alternatives</p>
-    @listPosts(pages)
+	<h1>404</h1>
+	<p>This article does not exist..  Here are some alternatives</p>
+	@listPosts(pages)
 }
 
-
-
 templ listPosts(pages *[]BlogPost) {
-    <style>
+	<style>
         .page-list {
             list-style: none;
             padding: 0;
@@ -81,31 +79,31 @@ templ listPosts(pages *[]BlogPost) {
         }
 
     </style>
-    <ul hx-boost="true" class="page-list">
-        for _, p := range *pages {
-            <li>
-                <a href={templ.SafeURL(p.Path)}>
-                <h3>{p.Title}</h3>
-                if v, ok := p.BlogMeta["date"]; ok {
-                    <div class="date">{fmt.Sprintf("%v",v) }</div>
-                } 
-                if v, ok := p.BlogMeta["description"]; ok {
-                    <div><span class="meta-key">description:</span> {fmt.Sprintf("%v",v) }</div>
-                }
-                if v, ok := p.BlogMeta["excerpt"]; ok {
-                    <div><span class="meta-key">excerpt:</span> {fmt.Sprintf("%v",v) }</div>
-                }
-                if v, ok := p.BlogMeta["embedding"]; ok {
-                    <div><span class="meta-key">embedding:</span> {fmt.Sprintf("%v",v) }</div>
-                }
-                if v, ok := p.BlogMeta["tags"]; ok {
-                    <div><span class="meta-key">tags:</span> {fmt.Sprintf("%v",v) }</div>
-                }
-                if v, ok := p.BlogMeta["keywords"]; ok {
-                    <div><span class="meta-key">keywords:</span> {fmt.Sprintf("%v",v) }</div>
-                }
-                </a>
-            </li>
-        }
-    </ul>
+	<ul hx-boost="true" class="page-list">
+		for _, p := range *pages {
+			<li>
+				<a href={ templ.SafeURL(p.Path) }>
+					<h3>{ p.Title }</h3>
+					if v, ok := p.BlogMeta["date"]; ok {
+						<div class="date">{ fmt.Sprintf("%v",v) }</div>
+					}
+					if v, ok := p.BlogMeta["description"]; ok {
+						<div><span class="meta-key">description:</span> { fmt.Sprintf("%v",v) }</div>
+					}
+					if v, ok := p.BlogMeta["excerpt"]; ok {
+						<div><span class="meta-key">excerpt:</span> { fmt.Sprintf("%v",v) }</div>
+					}
+					if v, ok := p.BlogMeta["embedding"]; ok {
+						<div><span class="meta-key">embedding:</span> { fmt.Sprintf("%v",v) }</div>
+					}
+					if v, ok := p.BlogMeta["tags"]; ok {
+						<div><span class="meta-key">tags:</span> { fmt.Sprintf("%v",v) }</div>
+					}
+					if v, ok := p.BlogMeta["keywords"]; ok {
+						<div><span class="meta-key">keywords:</span> { fmt.Sprintf("%v",v) }</div>
+					}
+				</a>
+			</li>
+		}
+	</ul>
 }

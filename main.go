@@ -10,6 +10,8 @@ import (
 	"github.com/charmbracelet/log"
 )
 
+const VERSION = "0.0.1"
+
 func main() {
 	startTime := time.Now()
 
@@ -19,7 +21,7 @@ func main() {
 	flag.Parse()
 
 	if *flagVersion {
-		fmt.Println("Version: 0.0.1")
+		fmt.Println("Version: " + VERSION)
 		os.Exit(0)
 	}
 

@@ -11,52 +11,50 @@ import (
 	"github.com/a-h/templ"
 	log "github.com/charmbracelet/log"
 	"github.com/johan-st/jst.dev/pages"
-	"github.com/matryer/way"
 )
 
 //go:embed content
 var embededFileSystem embed.FS
 
 type server struct {
-	l             *log.Logger
-	router        *way.Router
+	l              *log.Logger
+	router         *http.ServeMux
 	availablePosts []pages.BlogPost
-	defaultData   pages.Data
+	defaultData    pages.Data
 }
 
 // Register handlers for routes
 func (srv *server) prepareRoutes() {
 
 	// STATIC ASSETS
-	srv.router.HandleFunc("GET", "/favicon.ico", srv.handleStaticFile("content/assets/favicon.ico"))
-	srv.router.HandleFunc("GET", "/public/", srv.handlePublicDir("content/public", "/public/"))
+	srv.router.HandleFunc("GET /favicon.ico", srv.handleStaticFile("content/assets/favicon.ico"))
+	srv.router.HandleFunc("GET /public/", srv.handlePublicDir("content/public", "/public/"))
 
 	// AI
-	srv.router.HandleFunc("GET", "/ai", srv.handleRedirect(http.StatusTemporaryRedirect, "/ai/translate"))
-	// srv.router.HandleFunc("GET", "/ai/audio", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/chat", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/content-filter", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/stories", srv.handleNotImplemented())
-	// srv.router.HandleFunc("GET", "/ai/tutor", srv.handleNotImplemented())
-	srv.router.HandleFunc("GET", "/ai/translate", srv.handleAiTranslation())
+	// srv.router.HandleFunc("GET /ai", srv.handleRedirect(http.StatusTemporaryRedirect, "/ai/translate"))
+	// srv.router.HandleFunc("GET /ai/audio", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET /ai/chat", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET /ai/content-filter", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET /ai/stories", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET /ai/tutor", srv.handleNotImplemented())
+	// srv.router.HandleFunc("GET /ai/translate", srv.handleAiTranslation())
 	// AI POST
-	srv.router.HandleFunc("POST", "/ai/translate", srv.handleAiTranslationPost())
-	// srv.router.HandleFunc("POST", "/ai/stories", srv.handleAiStories())
+	// srv.router.HandleFunc("POST /ai/translate", srv.handleAiTranslationPost())
+	// srv.router.HandleFunc("POST /ai/stories", srv.handleAiStories())
 
 	// DOCS
-	srv.router.HandleFunc("GET", "/blog", srv.handleBlogIndex())
-	srv.router.HandleFunc("GET", "/blog/", srv.handleBlog())
+	srv.router.HandleFunc("GET /blog", srv.handleBlogIndex())
+	srv.router.HandleFunc("GET /blog/", srv.handleBlog())
 
 	// LANDING
-	srv.router.HandleFunc("GET", "/", srv.handleRedirect(http.StatusTemporaryRedirect, "/about"))
+	srv.router.HandleFunc("GET /", srv.handleRedirect(http.StatusTemporaryRedirect, "/404"))
 
 	// PAGES
-	srv.router.HandleFunc("GET", "/about", srv.handleMarkdownFile("content/pages/about.md"))
-	srv.router.HandleFunc("GET", "/contact", srv.handleMarkdownFile("content/pages/contact.md"))
-
+	srv.router.HandleFunc("GET /about", srv.handleMarkdownFile("content/pages/about.md"))
+	srv.router.HandleFunc("GET /contact", srv.handleMarkdownFile("content/pages/contact.md"))
 
 	// 404
-	srv.router.NotFound = srv.handleNotFound()
+	srv.router.HandleFunc("GET /404", srv.handleNotFound())
 }
 
 // HANDLERS
@@ -87,8 +85,9 @@ func (srv *server) handleMarkdownFile(path string) http.HandlerFunc {
 		l.Fatal(
 			"convert markdown",
 			"error", err,
-		)}
-	
+		)
+	}
+
 	content := pages.PageContent(mdPage)
 
 	// handler
@@ -483,14 +482,13 @@ func newRouter(l *log.Logger) server {
 	}
 	if l.GetLevel() == log.DebugLevel {
 		for _, p := range posts {
-			l.Debug("Blogpost loaded", 
-			"title", p.Path,
-			"path", p.Path,
-			"bytes", len(p.Body),
+			l.Debug("Blogpost loaded",
+				"title", p.Path,
+				"path", p.Path,
+				"bytes", len(p.Body),
 			)
 		}
 	}
-
 
 	pageData, err := defaultPageData()
 	if err != nil {
@@ -498,10 +496,10 @@ func newRouter(l *log.Logger) server {
 	}
 
 	return server{
-		l:             l,
-		router:        way.NewRouter(),
+		l:              l,
+		router:         http.NewServeMux(),
 		availablePosts: posts,
-		defaultData:   pageData,
+		defaultData:    pageData,
 	}
 }
 
