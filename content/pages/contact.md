@@ -1,6 +1,7 @@
 ---
 title: Contact
 path: contact
+listed: true
 ---
 # Contact
 

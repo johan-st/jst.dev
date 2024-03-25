@@ -70,22 +70,31 @@ func MdToPage(file []byte, baseUrl string) (BlogPost, error) {
 	metaData := document.OwnerDocument().Meta()
 	title, ok := metaData["title"]
 	if !ok {
-		return BlogPost{}, fmt.Errorf("no title found on post. File:\n%s", file[:min(100, len(file))])
+		return BlogPost{}, fmt.Errorf("no 'title' found on post. File:\n%s", file[:min(100, len(file))])
 	}
 	switch title.(type) {
 	case string:
 	default:
-		return BlogPost{}, fmt.Errorf("title is not a string. File: \n%s", file[:min(100, len(file))])
+		return BlogPost{}, fmt.Errorf("'title' is not a string. File: \n%s", file[:min(100, len(file))])
 	}
 
 	slug, ok := metaData["path"]
 	if !ok {
-		return BlogPost{}, fmt.Errorf("no path found on post. File: \n%s", file[:min(100, len(file))])
+		return BlogPost{}, fmt.Errorf("no 'path' found on post. File: \n%s", file[:min(100, len(file))])
 	}
-	switch slug.(type) {
-	case string:
-	default:
-		return BlogPost{}, fmt.Errorf("path is not a string. File: \n%s", file[:min(100, len(file))])
+
+	_, ok = slug.(string)
+	if !ok {
+		return BlogPost{}, fmt.Errorf("'path' is not a string. File: \n%s", file[:min(100, len(file))])
+	}
+	
+	listed, ok := metaData["listed"]
+	if !ok {
+		return BlogPost{}, fmt.Errorf("'listed' not found on post. File: \n%s", file[:min(100, len(file))])
+	}
+	_, ok = listed.(bool)
+	if !ok {
+		return BlogPost{}, fmt.Errorf("'listed' is not a bool. File: \n%s", file[:min(100, len(file))])
 	}
 
 	// make sure we DON'T have a trailing slash
@@ -99,11 +108,13 @@ func MdToPage(file []byte, baseUrl string) (BlogPost, error) {
 	buf := &bytes.Buffer{}
 	md.Convert(file, buf)
 
+
 	return BlogPost{
 		Title:    title.(string), // we checked
 		Body:     buf.Bytes(),
 		Path:     baseUrl + slug.(string), // we checked
 		BlogMeta: metaData,
+		Listed:   listed.(bool),
 	}, nil
 }
 

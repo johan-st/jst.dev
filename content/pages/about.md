@@ -3,6 +3,7 @@ title: Johan Strand
 description: Full stack developer
 path: about
 date: 2023-10-05
+listed: true
 ---
 
 # Full stack developer

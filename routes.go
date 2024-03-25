@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Kwynto/gosession"
 	"github.com/a-h/templ"
 	log "github.com/charmbracelet/log"
 	"github.com/johan-st/jst.dev/pages"
@@ -38,6 +37,7 @@ func (srv *server) prepareRoutes() {
 	// srv.router.HandleFunc("GET /ai/stories", srv.handleNotImplemented())
 	// srv.router.HandleFunc("GET /ai/tutor", srv.handleNotImplemented())
 	// srv.router.HandleFunc("GET /ai/translate", srv.handleAiTranslation())
+
 	// AI POST
 	// srv.router.HandleFunc("POST /ai/translate", srv.handleAiTranslationPost())
 	// srv.router.HandleFunc("POST /ai/stories", srv.handleAiStories())
@@ -158,52 +158,52 @@ func (srv *server) handleBlog() http.HandlerFunc {
 }
 
 // handlePage serves a pages from templates.
-func (srv *server) handleAiTranslation() http.HandlerFunc {
-	// timing and logging
-	l := srv.l.
-		WithPrefix(srv.l.GetPrefix() + ".PageAiTranslation")
+// func (srv *server) handleAiTranslation() http.HandlerFunc {
+// 	// timing and logging
+// 	l := srv.l.
+// 		WithPrefix(srv.l.GetPrefix() + ".PageAiTranslation")
 
-	defer func(t time.Time) {
-		l.Info(
-			logReady,
-			logTimeSpent, time.Since(t),
-		)
-	}(time.Now())
+// 	defer func(t time.Time) {
+// 		l.Info(
+// 			logReady,
+// 			logTimeSpent, time.Since(t),
+// 		)
+// 	}(time.Now())
 
-	// setup
+// 	// setup
 
-	sessionHandler := newSessionHandler(l)
-	pageData, err := defaultPageData()
-	if err != nil {
-		l.Fatal("Could not get default page data", logError, err)
-	}
+// 	sessionHandler := newSessionHandler(l)
+// 	pageData, err := defaultPageData()
+// 	if err != nil {
+// 		l.Fatal("Could not get default page data", logError, err)
+// 	}
 
-	// handler
-	return func(w http.ResponseWriter, r *http.Request) {
-		var (
-			content templ.Component
-			session gosession.SessionId
-		)
-		// time and log
-		defer func(t time.Time) {
-			l.Debug("serving page",
-				logTimeSpent, time.Since(t),
-				"path", r.URL.Path,
-			)
-		}(time.Now())
+// 	// handler
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		var (
+// 			content templ.Component
+// 			session gosession.SessionId
+// 		)
+// 		// time and log
+// 		defer func(t time.Time) {
+// 			l.Debug("serving page",
+// 				logTimeSpent, time.Since(t),
+// 				"path", r.URL.Path,
+// 			)
+// 		}(time.Now())
 
-		session = gosession.Start(&w, r)
-		trans := sessionHandler.getTranslations(&session)
-		content = pages.OpenAiTranslate(trans)
+// 		session = gosession.Start(&w, r)
+// 		trans := sessionHandler.getTranslations(&session)
+// 		content = pages.OpenAiTranslate(trans)
 
-		layout := pages.Layout(pageData, content)
-		err = layout.Render(r.Context(), w)
-		if err != nil {
-			l.Error("Could not render template", logError, err)
-			srv.respCode(http.StatusInternalServerError, w, r)
-		}
-	}
-}
+// 		layout := pages.Layout(pageData, content)
+// 		err = layout.Render(r.Context(), w)
+// 		if err != nil {
+// 			l.Error("Could not render template", logError, err)
+// 			srv.respCode(http.StatusInternalServerError, w, r)
+// 		}
+// 	}
+// }
 
 // handlePage serves a pages from templates.
 func (srv *server) handleBlogIndex() http.HandlerFunc {

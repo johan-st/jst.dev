@@ -8,12 +8,13 @@ type BlogPost struct {
 	Title string
 	Body  []byte
 	Path  string
+    Listed bool
 	BlogMeta
 }
 
 templ BlogContent(p BlogPost) {
 	<h1>{ p.Title }</h1>
-	<div class="content" id={ "bost_" + p.Path }>
+	<div class="content" id={ "post_" + p.Path }>
 		@p
 	</div>
 }

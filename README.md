@@ -8,9 +8,8 @@
 # generate templ files (requires templ)
 templ generate -watch -path pages
 
-# live reload (requires anko)
-anko
-
+# live reload (air)
+air
 # run for dev
 go run . -debug -dev
 

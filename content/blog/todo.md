@@ -7,6 +7,7 @@ excerpt: "This blog post outlines a comprehensive to-do list on website enhancem
 emdeding: abcd-1234
 tags: ["todo", "website"]
 keywords: [todo, website]
+listed: true
 ---
 
 ## website
