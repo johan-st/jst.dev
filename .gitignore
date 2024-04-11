@@ -23,6 +23,7 @@ go.work
 # Go build output
 build/
 
+# pocketbase data
+pb_data
 
-# templ temp files
-pages/*.txt
+
