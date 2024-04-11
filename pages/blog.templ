@@ -56,13 +56,10 @@ templ listPosts(pages *[]BlogPost) {
             text-decoration: none;
             display: block;
             color: var(--clr-text);
-            // transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease-in-out;
         }
         .page-list li a:hover {
-            // box-shadow: var(--shadow-glow);
-            // box-shadow: var(--shadow);
             border: .1rem solid var(--clr-secondary);
-            // transform: scale(1.01);
         }
         .page-list li a:hover>h3 {
             text-decoration: underline;
@@ -86,7 +83,7 @@ templ listPosts(pages *[]BlogPost) {
 				<a href={ templ.SafeURL(p.Path) }>
 					<h3>{ p.Title }</h3>
 					if v, ok := p.BlogMeta["date"]; ok {
-						<div class="date">{ fmt.Sprintf("%v",v) }</div>
+						<div class="date"><span class="meta-key">updated:</span>{ fmt.Sprintf("%v",v) }</div>
 					}
 					if v, ok := p.BlogMeta["description"]; ok {
 						<div><span class="meta-key">description:</span> { fmt.Sprintf("%v",v) }</div>

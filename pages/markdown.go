@@ -98,9 +98,6 @@ func MdToPage(file []byte, baseUrl string) (BlogPost, error) {
 	}
 
 	// make sure we DON'T have a trailing slash
-	if slug.(string) == "/" {
-		slug = ""
-	}
 	if slug.(string)[len(slug.(string))-1] == '/' {
 		slug = slug.(string)[:len(slug.(string))-1]
 	}

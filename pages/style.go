@@ -59,8 +59,6 @@ func (t Theme) Component() (templ.Component, error) {
 			str.WriteString("--clr-text-muted: " + t.ColorTextMuted + ";")
 			str.WriteString("--clr-border: " + t.ColorBorder + ";")
 			str.WriteString("--border-radius: " + t.BorderRadius + ";")
-			str.WriteString("--shadow-glow: 0px 0px 10px var(--clr-secondary);")
-			str.WriteString("--shadow: 4px 2px 8px var(--clr-secondary);")
 			str.WriteString("}</style>")
 			io.WriteString(w, str.String())
 			return nil

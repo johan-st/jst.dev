@@ -2,9 +2,12 @@
 
 ## Dev
 
-**anko** has not been working as well as I hoped. I'm still doing a lot of `ctrl+c` and `go run .`.
+
 
 ```bash	
+# install templ
+go install github.com/a-h/templ/cmd/templ@latest
+
 # generate templ files (requires templ)
 templ generate -watch -path pages
 

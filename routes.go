@@ -16,10 +16,11 @@ import (
 var embededFileSystem embed.FS
 
 type server struct {
-	l              *log.Logger
-	router         *http.ServeMux
-	availablePosts []pages.BlogPost
-	defaultData    pages.Data
+	l             *log.Logger
+	router        *http.ServeMux
+	postsListed   []pages.BlogPost
+	postsUnlisted []pages.BlogPost
+	defaultData   pages.Data
 }
 
 // Register handlers for routes
@@ -47,14 +48,14 @@ func (srv *server) prepareRoutes() {
 	srv.router.HandleFunc("GET /blog/", srv.handleBlog())
 
 	// LANDING
-	srv.router.HandleFunc("GET /", srv.handleRedirect(http.StatusTemporaryRedirect, "/404"))
+	srv.router.HandleFunc("GET /", srv.handleMarkdownFile("content/pages/landing.md"))
 
 	// PAGES
 	srv.router.HandleFunc("GET /about", srv.handleMarkdownFile("content/pages/about.md"))
 	srv.router.HandleFunc("GET /contact", srv.handleMarkdownFile("content/pages/contact.md"))
 
 	// 404
-	srv.router.HandleFunc("GET /404", srv.handleNotFound())
+	srv.router.HandleFunc("GET /{other}", srv.handleNotFound())
 }
 
 // HANDLERS
@@ -132,7 +133,7 @@ func (srv *server) handleBlog() http.HandlerFunc {
 
 		var content templ.Component
 
-		for _, p := range srv.availablePosts {
+		for _, p := range srv.postsListed {
 			if p.Path == r.URL.Path {
 				content = pages.BlogContent(p)
 				l.Debug("document found",
@@ -146,7 +147,7 @@ func (srv *server) handleBlog() http.HandlerFunc {
 				logReqPath, r.URL.Path,
 				"referer", r.Header.Values("referer"),
 			)
-			content = pages.Blog404(&srv.availablePosts)
+			content = pages.Blog404(&srv.postsListed)
 		}
 
 		err := pages.Layout(srv.defaultData, content).Render(r.Context(), w)
@@ -230,7 +231,7 @@ func (srv *server) handleBlogIndex() http.HandlerFunc {
 			)
 		}(time.Now())
 
-		content := pages.BlogIndex(&srv.availablePosts)
+		content := pages.BlogIndex(&srv.postsListed)
 
 		layout := pages.Layout(srv.defaultData, content)
 		err := layout.Render(r.Context(), w)
@@ -466,7 +467,7 @@ func addToList(list *[]string) fs.WalkDirFunc {
 }
 
 func newRouter(l *log.Logger) server {
-	var posts []pages.BlogPost
+	var posts, postsListed, postsUnlisted []pages.BlogPost
 
 	// setup
 	tempFs, err := fs.Sub(embededFileSystem, "content/blog")
@@ -490,16 +491,25 @@ func newRouter(l *log.Logger) server {
 		}
 	}
 
+	for _, post := range posts {
+		if post.Listed {
+			postsListed = append(postsListed, post)
+		} else {
+			postsUnlisted = append(postsUnlisted, post)
+		}
+	}
+
 	pageData, err := defaultPageData()
 	if err != nil {
 		l.Fatal("Could not get default page data", logError, err)
 	}
 
 	return server{
-		l:              l,
-		router:         http.NewServeMux(),
-		availablePosts: posts,
-		defaultData:    pageData,
+		l:             l,
+		router:        http.NewServeMux(),
+		postsListed:   postsListed,
+		postsUnlisted: postsUnlisted,
+		defaultData:   pageData,
 	}
 }
 
@@ -517,9 +527,9 @@ func defaultPageData() (pages.Data, error) {
 	}
 
 	return pages.Data{
-		DocTitle: "dpj-ai",
+		DocTitle: "jst.dev - @johan-st",
 		TopNav: []pages.Link{
-			{Url: "/ai", Text: "AI", External: false},
+			{Url: "/", Text: "Home", External: false},
 			{Url: "/about", Text: "About", External: false},
 			{Url: "/contact", Text: "Contact", External: false},
 			{Url: "/blog", Text: "Blog", External: false},
