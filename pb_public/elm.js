@@ -15312,7 +15312,7 @@ var $author$project$Page$viewHeader = F2(
 							$elm$html$Html$a,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$class('navbar-brand'),
+									$elm$html$Html$Attributes$class('navbar-brand logo-font'),
 									$author$project$Route$href($author$project$Route$Home)
 								]),
 							_List_fromArray(

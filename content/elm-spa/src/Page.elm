@@ -50,7 +50,7 @@ viewHeader : Page -> Maybe Viewer -> Html msg
 viewHeader page maybeViewer =
     nav [ class "navbar navbar-light" ]
         [ div [ class "container" ]
-            [ a [ class "navbar-brand", Route.href Route.Home ]
+            [ a [ class "navbar-brand logo-font", Route.href Route.Home ]
                 [ text "jst.dev" ]
             , ul [ class "nav navbar-nav pull-xs-right" ] <|
                 navbarLink page Route.Home [ text "Home" ]
