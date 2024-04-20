@@ -29,4 +29,7 @@ tmp/
 # pocketbase data
 pb_data
 
+# elm
+elm-stuff/
+
 
