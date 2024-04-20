@@ -11,11 +11,11 @@ import (
 
 func main() {
     app := pocketbase.New()
-
     // serves static files from the provided public dir (if exists)
     app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
         // Serve the public directory falling back to "index.html" if not found
-        e.Router.GET("/*", apis.StaticDirectoryHandler(os.DirFS("./pb_public"), true))
+        e.Router.GET("/*", apis.StaticDirectoryHandler(os.DirFS("./pb_public"), true), apis.ActivityLogger(app))
+        e.Router.POST("/logging", handlerLogging)
 
         return nil
     })
