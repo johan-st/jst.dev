@@ -10,3 +10,4 @@ I've created [jst.dev](https://jst.dev) to experiment with patterns and tech. So
 - [ ] change footer
 - [ ] go through styling and make it clearer
 - [ ] add chatGPT for logged in users
+- [ ] revoke sentry key and set up a secret

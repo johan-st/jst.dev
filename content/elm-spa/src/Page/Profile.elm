@@ -356,7 +356,7 @@ update msg model =
 
         CompletedFollowChange (Err error) ->
             ( model
-            , Log.error
+            , Log.error <| "[Profile.CompletedFollowChange]" ++ Log.stringHttpError error
             )
 
         CompletedAuthorLoad (Ok author) ->
@@ -364,7 +364,7 @@ update msg model =
 
         CompletedAuthorLoad (Err ( username, err )) ->
             ( { model | author = Failed username }
-            , Log.error
+            , Log.error <| "[Profile.CompletedAuthorLoad]" ++ Log.stringHttpError err
             )
 
         CompletedFeedLoad (Ok feed) ->
@@ -374,7 +374,7 @@ update msg model =
 
         CompletedFeedLoad (Err ( username, err )) ->
             ( { model | feed = Failed username }
-            , Log.error
+            , Log.error <| "[Profile.CompletedFeedLoad]" ++ Log.stringHttpError err
             )
 
         GotFeedMsg subMsg ->
@@ -389,13 +389,13 @@ update msg model =
                     )
 
                 Loading _ ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Profile.GotFeedMsg] Loading" )
 
                 LoadingSlowly _ ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Profile.GotFeedMsg] LoadingSlowly")
 
                 Failed _ ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Profile.GotFeedMsg] Failed")
 
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )

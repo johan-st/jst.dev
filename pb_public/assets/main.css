@@ -7341,7 +7341,7 @@ ul.tag-list li {
 }
 
 footer {
-    background: #f3f3f3;
+    background: var(--clr-background-2);
     margin-top: 3rem;
     padding: 1rem 0;
     position: absolute;
@@ -7353,6 +7353,7 @@ footer .logo-font {
     vertical-align: middle
 }
 
+footer .contact,
 footer .attribution {
     vertical-align: middle;
     margin-left: 10px;
@@ -7360,7 +7361,15 @@ footer .attribution {
     color: #bbb;
     font-weight: 300
 }
+footer .contact {
+    margin-left: auto;
+}
 
+footer > .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
 .error-messages {
     color: #b85c5c !important;
     font-weight: 700

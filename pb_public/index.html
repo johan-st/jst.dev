@@ -14,10 +14,18 @@
 
     <link rel="stylesheet" href="/assets/main.css">
 
+    <script src='https://js-de.sentry-cdn.com/f4758962110421a1ed08360be896a9bc.min.js' crossorigin="anonymous"></script>
     <script src="/assets/elm.js"></script>
   </head>
   <body>
     <script>
+      Sentry.captureMessage("Hello from Elm!");
+      try {
+        throw new Error("Hello from Elm!");
+      } catch (e) {
+        Sentry.captureException(e);
+      }
+      console.log("Hello from Elm!");
       var storageKey = "store";
       var flags = localStorage.getItem(storageKey);
       var app = Elm.Main.init({flags: flags});
@@ -30,9 +38,19 @@
           localStorage.setItem(storageKey, JSON.stringify(val));
         }
 
-        // Report that the new session was stored successfully.
-        setTimeout(function() { app.ports.onStoreChange.send(val); }, 0);
-      });
+      // Report that the new session was stored successfully.
+      setTimeout(function () { app.ports.onStoreChange.send(val); }, 0);
+    });
+
+    /* LOGGING */
+    app.ports.debug.subscribe(function (msg) {
+      Sentry.captureMessage(msg, "debug");
+      console.debug(msg);
+    });
+    app.ports.error.subscribe(function (msg) {
+      Sentry.captureMessage(msg, "error");
+      console.error(msg);
+    });
 
       // Whenever localStorage changes in another tab, report it if necessary.
       window.addEventListener("storage", function(event) {

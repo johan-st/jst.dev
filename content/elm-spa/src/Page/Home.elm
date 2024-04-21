@@ -277,7 +277,7 @@ update msg model =
 
         CompletedTagsLoad (Err error) ->
             ( { model | tags = Failed }
-            , Log.error
+            , Log.error ("[Home.CompletedTagsLoad] " ++ Log.stringHttpError error)
             )
 
         GotFeedMsg subMsg ->
@@ -292,13 +292,13 @@ update msg model =
                     )
 
                 Loading ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Home.GotFeedMsg] Loading" )
 
                 LoadingSlowly ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Home.GotFeedMsg] LoadingSlowly" )
 
                 Failed ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Home.GotFeedMsg] Failed" )
 
         GotTimeZone tz ->
             ( { model | timeZone = tz }, Cmd.none )

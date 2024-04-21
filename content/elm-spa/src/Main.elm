@@ -24,6 +24,7 @@ import Time
 import Url exposing (Url)
 import Username exposing (Username)
 import Viewer exposing (Viewer)
+import Log
 
 
 
@@ -169,7 +170,7 @@ changeRouteTo maybeRoute model =
             ( model, Route.replaceUrl (Session.navKey session) Route.Home )
 
         Just Route.Logout ->
-            ( model, Api.logout )
+            ( model, Cmd.batch [Api.logout, Log.debug "[Main.changeRouteTo] logout"] )
 
         Just Route.NewArticle ->
             Editor.initNew session

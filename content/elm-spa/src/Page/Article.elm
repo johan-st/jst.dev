@@ -346,21 +346,23 @@ update msg model =
 
         CompletedLoadArticle (Err error) ->
             ( { model | article = Failed }
-            , Log.error
+            , Log.error <| "[Article.CompletedLoadArticle]" ++ Log.stringHttpError error
             )
 
         CompletedLoadComments (Ok comments) ->
             ( { model | comments = Loaded ( Editing "", comments ) }, Cmd.none )
 
         CompletedLoadComments (Err error) ->
-            ( { model | article = Failed }, Log.error )
+            ( { model | article = Failed }
+            , Log.error <| "[Article.CompletedLoadComments]" ++ Log.stringHttpError error
+            )
 
         CompletedFavoriteChange (Ok newArticle) ->
             ( { model | article = Loaded newArticle }, Cmd.none )
 
         CompletedFavoriteChange (Err error) ->
             ( { model | errors = Api.addServerError model.errors }
-            , Log.error
+            , Log.error <| "[Article.CompletedFavoriteChange]" ++ Log.stringHttpError error
             )
 
         ClickedUnfollow cred followedAuthor ->
@@ -381,11 +383,11 @@ update msg model =
                     ( { model | article = Loaded (Article.mapAuthor (\_ -> newAuthor) article) }, Cmd.none )
 
                 _ ->
-                    ( model, Log.error )
+                    ( model, Log.error ("[CompletedFollowChange] Article not Loaded") )
 
         CompletedFollowChange (Err error) ->
             ( { model | errors = Api.addServerError model.errors }
-            , Log.error
+            , Log.error <| "[Article.CompletedFollowChange]" ++ Log.stringHttpError error
             )
 
         EnteredCommentText str ->
@@ -399,7 +401,7 @@ update msg model =
                     )
 
                 _ ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Article.EnteredCommentText] comments not Loaded")
 
         ClickedPostComment cred slug ->
             case model.comments of
@@ -420,7 +422,7 @@ update msg model =
                     -- Either we have no comment to post, or there's already
                     -- one in the process of being posted, or we don't have
                     -- a valid article, in which case how did we post this?
-                    ( model, Log.error )
+                    ( model, Log.error "[Article.ClickedPostComment] comments not Loaded")
 
         CompletedPostComment (Ok comment) ->
             case model.comments of
@@ -430,11 +432,11 @@ update msg model =
                     )
 
                 _ ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Article.CompletedPostComment] comments not Loaded")
 
         CompletedPostComment (Err error) ->
             ( { model | errors = Api.addServerError model.errors }
-            , Log.error
+            , Log.error <| "[Article.CompletedPostComment]" ++ Log.stringHttpError error
             )
 
         ClickedDeleteComment cred slug id ->
@@ -452,11 +454,11 @@ update msg model =
                     )
 
                 _ ->
-                    ( model, Log.error )
+                    ( model, Log.error "[Article.CompletedDeleteComment] comments not Loaded")
 
         CompletedDeleteComment id (Err error) ->
             ( { model | errors = Api.addServerError model.errors }
-            , Log.error
+            , Log.error ("[Article.CompletedDeleteComment]" ++ Log.stringHttpError error)
             )
 
         ClickedDeleteArticle cred slug ->
@@ -470,7 +472,7 @@ update msg model =
 
         CompletedDeleteArticle (Err error) ->
             ( { model | errors = Api.addServerError model.errors }
-            , Log.error
+            , Log.error ("[Article.CompletedDeleteArticle]" ++ Log.stringHttpError error)
             )
 
         GotTimeZone tz ->

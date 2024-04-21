@@ -4,7 +4,7 @@ import Api exposing (Cred)
 import Avatar
 import Browser exposing (Document)
 import Html exposing (Html, a, button, div, footer, i, img, li, nav, p, span, text, ul)
-import Html.Attributes exposing (class, classList, href, style)
+import Html.Attributes exposing (class, classList, href, style, type_)
 import Html.Events exposing (onClick)
 import Profile
 import Route exposing (Route)
@@ -94,11 +94,12 @@ viewFooter : Html msg
 viewFooter =
     footer []
         [ div [ class "container" ]
-            [ a [ class "logo-font", href "/" ] [ text "conduit" ]
-            , span [ class "attribution" ]
-                [ text "An interactive learning project from "
-                , a [ href "https://thinkster.io" ] [ text "Thinkster" ]
-                , text ". Code & design licensed under MIT."
+            [ a [ class "logo-font", href "/" ] [ text "jst.dev" ]
+            , div [ class "attribution" ]
+                [ text " a Strandersson family project. " ]
+            , div [ class "contact" ]
+                [ text "contact: "
+                , a [ href "mailto:z06ukzl1a@mozmail.com" ] [ text " z06ukzl1a@mozmail.com" ]
                 ]
             ]
         ]

@@ -300,7 +300,7 @@ updateForm transform model =
             ( { model | status = Loaded (transform form) }, Cmd.none )
 
         _ ->
-            ( model, Log.error )
+            ( model, Log.error "[Settings.updateForm] form not Loaded")
 
 
 
