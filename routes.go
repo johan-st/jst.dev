@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
+	"text/template"
 )
 
 func addRoutes(
@@ -19,8 +21,28 @@ func addRoutes(
 	// authProxy           *authProxy
 ) {
 	mux.Handle("/hello", handleHello(logger))
-	mux.Handle("/maybe", onlySometimes(handleAdmin(logger)))
-	mux.Handle("/", http.NotFoundHandler())
+	mux.Handle("/maybe", onlySometimes(handleMaybe(logger)))
+	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("spa/assets"))))
+	mux.Handle("/", handleSpa(logger))
+}
+
+func handleSpa(logger *log.Logger) http.Handler {
+	var tmplFile = "index.html"
+	tmpl, err := template.New(tmplFile).ParseFiles(tmplFile)
+	if err != nil {
+		panic(err)
+	}
+	err = tmpl.Execute(io.Discard, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Println("spa page was hit")
+		if err := tmpl.Execute(w, nil); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
 }
 
 func handleHello(logger *log.Logger) http.Handler {
@@ -31,13 +53,17 @@ func handleHello(logger *log.Logger) http.Handler {
 	})
 }
 
-func handleAdmin(logger *log.Logger) http.Handler {
+func handleMaybe(logger *log.Logger) http.Handler {
 	// closure for setting up the handler
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Println("admin")
+		logger.Println("maybe page was hit")
 		encode(w, r, http.StatusOK, struct {
+			Type    string `json:"type"`
 			Message string `json:"message"`
-		}{Message: "admin page was hit"})
+		}{
+			Type:    "json",
+			Message: "congratulations! Maybe page was hit",
+		})
 	})
 }
 
