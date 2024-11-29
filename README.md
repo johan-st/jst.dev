@@ -1,51 +1,53 @@
-# Internal web
+# Project jst.dev
 
-## Dev
+One Paragraph of project description goes here
 
+## Getting Started
 
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
-```bash	
-# install templ
-go install github.com/a-h/templ/cmd/templ@latest
+## MakeFile
 
-# generate templ files (requires templ)
-templ generate -watch -path pages
-
-# live reload (air)
-air
-# run for dev
-go run . -debug -dev
-
-# run as in production
-go run .
-```
-
-## Build
-
-
+Run build make command with tests
 ```bash
-# build for local environment
-go build -o dpj-web . 
+make all
 ```
+
+Build the application
 ```bash
-GOOS=linux GOARCH=amd64 go build -o build/dpj_linux && \
-GOOS=darwin GOARCH=amd64 go build -o build/dpj_macos && \
-GOOS=windows GOARCH=amd64 go build -o build/dpj_win.exe && echo "done"
+make build
 ```
 
+Run the application
+```bash
+make run
+```
+Create DB container
+```bash
+make docker-run
+```
 
-## Prequisites
+Shutdown DB Container
+```bash
+make docker-down
+```
 
-### Running
-- open-ai api key at `OPENAI_API_KEY`
+DB Integrations Test:
+```bash
+make itest
+```
 
-### Development
-- open-ai api key at `OPENAI_API_KEY`
-- `templ` for generating templates
-- `anko` for live reloading (optional)
+Live reload the application:
+```bash
+make watch
+```
 
+Run the test suite:
+```bash
+make test
+```
 
-## Philosophy
-
-- I am embedding all files needed for operation into a single binary. (This is done with the `go:embed` directive.) 
-- I'm trying to keep the code fairly 
+Clean up binary from the last build:
+```bash
+make clean
+```
