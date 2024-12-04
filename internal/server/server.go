@@ -20,20 +20,27 @@ type Server struct {
 }
 
 func NewServer() *http.Server {
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	
+	port, err := strconv.Atoi(os.Getenv("PORT"))
+	if err != nil {
+		log.Fatalf("Failed to parse PORT: %v", err)
+	}
+	host := os.Getenv("HOST")
+	if host == "" {
+		log.Fatalf("HOST is not set")
+	}
+
 	db, err := repo.NewTursoRepo()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	NewServer := &Server{
 		port: port,
-		db: db,
+		db:   db,
 	}
 
 	// Declare Server config
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
+		Addr:         fmt.Sprintf("%s:%d", host, NewServer.port),
 		Handler:      NewServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,

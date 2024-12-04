@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	ulid "github.com/oklog/ulid/v2"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
@@ -77,8 +78,8 @@ func (t *TursoRepo) IncrementRedirectCount() error {
 }
 
 // LOG
-// LogAccess represents a single access log entry in the database
-type LogAccess struct {
+// AccessLog represents a single access request to the service
+type AccessLog struct {
 	ID            int64     `db:"id"`
 	Timestamp     time.Time `db:"timestamp"`
 	RemoteAddr    string    `db:"remote_addr"`
@@ -90,8 +91,24 @@ type LogAccess struct {
 	Referer       string    `db:"referer"`
 }
 
-// LogRequest inserts a new request log entry into the database
-func (t *TursoRepo) LogRequest(req *http.Request) error {
+type EventLog struct {
+	Id          ulid.ULID `db:"id"` // Unique and monotonically sortable (ref: https://github.com/oklog/ulid)
+	Timestamp   time.Time `db:"timestamp"`
+	ShortCode   string    `db:"short_code"`
+	Description string    `db:"description"`
+	Severity    Severity  `db:"severity"`
+}
+
+type Severity string
+
+const (
+	Info    Severity = "info"
+	Warning Severity = "warning"
+	Error   Severity = "error"
+)
+
+// AccessLogInsert inserts a new access log entry into the database
+func (t *TursoRepo) AccessLogInsert(req *http.Request) error {
 	remoteAddr := req.RemoteAddr
 	// use X-Forwarded-For header if available (e.g. from reverse proxy)
 	if forwarded := req.Header.Get("X-Forwarded-For"); forwarded != "" {
@@ -120,8 +137,8 @@ func (t *TursoRepo) LogRequest(req *http.Request) error {
 	return err
 }
 
-// GetAccessLogs retrieves a list of access logs from the database
-func (t *TursoRepo) GetAccessLogs(page, pageSize int) ([]LogAccess, error) {
+// AccessLogsGet retrieves a list of access logs from the database
+func (t *TursoRepo) AccessLogsGet(page, pageSize int) ([]AccessLog, error) {
 	rows, err := t.db.Query(`
 		SELECT 
 			id,
@@ -143,9 +160,9 @@ func (t *TursoRepo) GetAccessLogs(page, pageSize int) ([]LogAccess, error) {
 	}
 	defer rows.Close()
 
-	var logs []LogAccess
+	var logs []AccessLog
 	for rows.Next() {
-		var entry LogAccess
+		var entry AccessLog
 		err := rows.Scan(
 			&entry.ID,
 			&entry.Timestamp,
@@ -166,7 +183,7 @@ func (t *TursoRepo) GetAccessLogs(page, pageSize int) ([]LogAccess, error) {
 	return logs, rows.Err()
 }
 
-func (t *TursoRepo) CountRedirectsInTimeSpan(from, to time.Time) (int, error) {
+func (t *TursoRepo) AccessLogsCountInTimeSpan(from, to time.Time) (int, error) {
 	var count int
 	err := t.db.QueryRow(`
 		SELECT COUNT(*) 
@@ -180,7 +197,7 @@ func (t *TursoRepo) CountRedirectsInTimeSpan(from, to time.Time) (int, error) {
 	return count, nil
 }
 
-func (t *TursoRepo) CountAllLogs() (int, error) {
+func (t *TursoRepo) AccessLogsCount() (int, error) {
 	var count int
 	err := t.db.QueryRow(`
 		SELECT COUNT(*) 
@@ -207,14 +224,21 @@ func (t *TursoRepo) RunMigrations() error {
 		// v1: Create access_logs table for tracking request details
 		`CREATE TABLE IF NOT EXISTS access_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			remote_addr TEXT,
-			request_method TEXT,
-			request_uri TEXT,
-			protocol TEXT,
-			status_code INTEGER,
+			timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			remote_addr TEXT NOT NULL,
+			request_method TEXT NOT NULL,
+			request_uri TEXT NOT NULL,
+			protocol TEXT NOT NULL,
+			status_code INTEGER NOT NULL,
 			user_agent TEXT,
 			referer TEXT
+		);
+		CREATE TABLE IF NOT EXISTS event_logs (
+			id TEXT PRIMARY KEY NOT NULL,
+			timestamp TIMESTAMP NOT NULL,
+			short_code TEXT NOT NULL,
+			description TEXT NOT NULL,
+			severity TEXT NOT NULL
 		);`,
 	}
 

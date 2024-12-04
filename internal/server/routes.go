@@ -65,13 +65,17 @@ func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := json.Marshal(s.db.Health())
+	var status string
+
+	err := s.db.Health()
 	if err != nil {
-		http.Error(w, "Failed to marshal health check response", http.StatusInternalServerError)
-		return
+		status = "DOWN"
+	} else {
+		status = "OK"
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if _, err := w.Write(resp); err != nil {
+
+	w.Header().Set("Content-Type", "text/plain")
+	if _, err := w.Write([]byte(status)); err != nil {
 		log.Printf("Failed to write response: %v", err)
 	}
 }
