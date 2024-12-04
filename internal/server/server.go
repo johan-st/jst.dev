@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -9,21 +10,25 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"jst.dev/internal/database"
+	repo "jst.dev/internal/persistence"
 )
 
 type Server struct {
 	port int
 
-	db database.Service
+	db *repo.TursoRepo
 }
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	
+	db, err := repo.NewTursoRepo()
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
 	NewServer := &Server{
 		port: port,
-
-		db: database.New(),
+		db: db,
 	}
 
 	// Declare Server config
