@@ -10,13 +10,13 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	repo "jst.dev/internal/persistence"
+	"jst.dev/internal/repo"
 )
 
 type Server struct {
 	port int
 
-	db *repo.TursoRepo
+	Repo *repo.TursoRepo
 }
 
 func NewServer() *http.Server {
@@ -29,13 +29,13 @@ func NewServer() *http.Server {
 		log.Fatalf("HOST is not set")
 	}
 
-	db, err := repo.NewTursoRepo()
+	repo, err := repo.NewTursoRepo()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	NewServer := &Server{
 		port: port,
-		db:   db,
+		Repo: repo,
 	}
 
 	// Declare Server config

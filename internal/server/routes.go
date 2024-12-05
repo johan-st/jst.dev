@@ -25,9 +25,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	mux.Handle("/assets/", fileServer)
-	mux.Handle("/web", templ.Handler(web.HelloForm()))
-	mux.HandleFunc("/hello", web.HelloWebHandler)
-
+	mux.Handle("/web", templ.Handler(web.HelloForm(web.DataBase{
+		Title: "Hello - jst.dev",
+		Meta:  web.Meta{"description": "Hello"},
+	})))
+	mux.HandleFunc("/hello", web.HandlerHelloWeb)
+	mux.HandleFunc("/blog", web.HandlerBlogWeb(s.Repo))
 	// Wrap the mux with CORS middleware
 	return s.corsMiddleware(mux)
 }
@@ -35,7 +38,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "*") // Replace "*" with specific origins if needed
+		w.Header().Set("Access-Control-Allow-Origin", "fly.dev, localhost, jst.dev") // Replace "*" with specific origins if needed
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
 		w.Header().Set("Access-Control-Allow-Credentials", "false") // Set to "true" if credentials are required
@@ -67,7 +70,7 @@ func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	var status string
 
-	err := s.db.Health()
+	err := s.Repo.Health()
 	if err != nil {
 		status = "DOWN"
 	} else {

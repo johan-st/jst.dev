@@ -1,0 +1,67 @@
+package web
+
+import (
+	"jst.dev/internal/repo"
+)
+
+templ Blog(base DataBase, featuredPost repo.BlogPost, posts []repo.BlogPost) {
+@Base(base) {
+<div class="bg-white py-24 sm:py-32">
+    <div class="mx-auto grid max-w-7xl grid-cols-1 gap-x-8 gap-y-12 px-6 sm:gap-y-16 lg:grid-cols-2 lg:px-8">
+        @BlogPostPreviewFeatured(featuredPost)
+        <div
+            class="mx-auto w-full max-w-2xl border-t border-gray-900/10 pt-12 sm:pt-16 lg:mx-0 lg:max-w-none lg:border-t-0 lg:pt-0">
+            <div class="-my-12 divide-y divide-gray-900/10">
+                for _, post := range posts {
+                @BlogPostPreview(post)
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}
+}
+
+templ BlogPostPreviewFeatured(post repo.BlogPost) {
+<article class="mx-auto w-full max-w-2xl lg:mx-0 lg:max-w-lg">
+    <time datetime={ post.Date.Format("2006-01-02") } class="block text-sm/6 text-gray-600">{ post.Date.Format("Jan 2, 2006") }</time>
+    <h2 id="featured-post" class="mt-4 text-pretty text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
+        { post.Title }
+    </h2>
+    <p class="mt-4 text-lg/8 text-gray-600">{ post.Short }</p>
+    <div class="mt-4 flex flex-col justify-between gap-6 sm:mt-8 sm:flex-row-reverse sm:gap-8 lg:mt-4 lg:flex-col">
+        <div class="flex">
+            <a href={ templ.URL("/blog/" + post.Slug) } class="text-sm/6 font-semibold text-indigo-600" aria-describedby="featured-post">Continue
+                reading
+                <span aria-hidden="true">&rarr;</span></a>
+        </div>
+        <div class="flex lg:border-t lg:border-gray-900/10 lg:pt-8">
+            <a href={ templ.URL("/blog/" + post.Slug) } class="flex gap-x-2.5 text-sm/6 font-semibold text-gray-900">
+                <img src={ post.Author.ImageURL } alt="" class="size-6 flex-none rounded-full bg-gray-50">
+                { post.Author.Name }
+            </a>
+        </div>
+    </div>
+</article>
+}
+
+templ BlogPostPreview(post repo.BlogPost) {
+<article class="py-12">
+    <div class="group relative max-w-xl">
+        <time datetime={ post.Date.Format("2006-01-02") } class="block text-sm/6 text-gray-600">{ post.Date.Format("Jan 2, 2006") }</time>
+        <h2 class="mt-2 text-lg font-semibold text-gray-900 group-hover:text-gray-600">
+            <a href={ templ.URL("/blog/" + post.Slug) }>
+                <span class="absolute inset-0"></span>
+                { post.Title }
+            </a>
+        </h2>
+        <p class="mt-4 text-sm/6 text-gray-600">{ post.Short }</p>
+    </div>
+    <div class="mt-4 flex">
+        <a href={ templ.URL("/blog/" + post.Slug) } class="relative flex gap-x-2.5 text-sm/6 font-semibold text-gray-900">
+            <img src={ post.Author.ImageURL } width="24" height="24" alt="" class="size-6 flex-none rounded-full bg-gray-50">
+            { post.Author.Name }
+        </a>
+    </div>
+</article>
+}

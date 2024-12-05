@@ -2,6 +2,7 @@ package repo
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -52,29 +53,43 @@ func (t *TursoRepo) Health() error {
 	return t.db.Ping()
 }
 
-// COUNTER
-func (t *TursoRepo) GetRedirectCount() (int, error) {
-	var count int
-	err := t.db.QueryRow("SELECT count FROM redirects_count WHERE id = 1").Scan(&count)
-	return count, err
+// BLOG
+type BlogPost struct {
+	Title  string    `db:"title"`
+	Date   time.Time `db:"date"`
+	Short  string    `db:"short"`
+	Body   string    `db:"body"`
+	Author Author    `db:"author"`
+	Slug   string    `db:"slug"`
 }
 
-func (t *TursoRepo) IncrementRedirectCount() error {
-	result, err := t.db.Exec("UPDATE redirects_count SET count = count + 1 WHERE id = 1")
-	if err != nil {
-		return err
+type Author struct {
+	Name     string `db:"name"`
+	ImageURL string `db:"image_url"`
+}
+
+// BlogPostsFeatured returns a list of featured blog posts
+// TODO: implement
+func (t *TursoRepo) BlogPostsFeatured(page, pageSize int) ([]BlogPost, error) {
+	if page < 0 || pageSize < 0 {
+		return nil, fmt.Errorf("page and pageSize must be greater than 0")
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
+	posts := []BlogPost{}
+	for i := 0; i < pageSize; i++ {
+		posts = append(posts, BlogPost{
+			Slug:  fmt.Sprintf("%d-%s", i, "slug"),
+			Title: "Boost your creativity",
+			Date:  time.Now().AddDate(-1, i, -37).Add(time.Hour * 12),
+			Body:  "body",
+			Short: "Libero neque aenean tincidunt nec consequat tempor. Viverra odio id velit adipiscing id. Nisi vestibulum orci eget bibendum dictum. Velit viverra posuere vulputate volutpat nunc. Nunc netus sit faucibus.",
+			Author: Author{
+				Name:     "Michael Foster",
+				ImageURL: "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+			},
+		})
 	}
-
-	if rowsAffected == 0 {
-		return sql.ErrNoRows
-	}
-
-	return nil
+	return posts, nil
 }
 
 // LOG
@@ -221,7 +236,7 @@ func (t *TursoRepo) RunMigrations() error {
 	}
 
 	migrations := []string{
-		// v1: Create access_logs table for tracking request details
+		// v1: Create initial tables
 		`CREATE TABLE IF NOT EXISTS access_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -239,6 +254,20 @@ func (t *TursoRepo) RunMigrations() error {
 			short_code TEXT NOT NULL,
 			description TEXT NOT NULL,
 			severity TEXT NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS blog_posts (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			id_author INTEGER NOT NULL,
+			title TEXT NOT NULL,
+			date TIMESTAMP NOT NULL,
+			short TEXT NOT NULL,
+			body TEXT NOT NULL,
+			slug TEXT NOT NULL UNIQUE
+		);
+		CREATE TABLE IF NOT EXISTS authors (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			image_url TEXT NOT NULL
 		);`,
 	}
 

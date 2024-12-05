@@ -5,13 +5,16 @@ import (
 	"net/http"
 )
 
-func HelloWebHandler(w http.ResponseWriter, r *http.Request) {
+func HandlerHelloWeb(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 	}
 
 	name := r.FormValue("name")
+	if name == "" {
+		name = "Stranger"
+	}
 	component := HelloPost(name)
 	err = component.Render(r.Context(), w)
 	if err != nil {
