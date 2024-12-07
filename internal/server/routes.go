@@ -17,7 +17,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 
 	// Register routes
-	mux.HandleFunc("/", s.HelloWorldHandler)
+	mux.HandleFunc("/", s.HandlerLanding)
+
+	mux.HandleFunc("/api/v1/messages", web.HandlerApiMessages())
+	mux.HandleFunc("/msg", web.HandlerMsg(s.RepoMsg))
 
 	mux.HandleFunc("/health", s.healthHandler)
 
@@ -25,12 +28,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	fileServer := http.FileServer(http.FS(web.Files))
 	mux.Handle("/assets/", fileServer)
-	mux.Handle("/web", templ.Handler(web.HelloForm(web.DataBase{
+	mux.Handle("/web", templ.Handler(web.MsgForm(web.DataBase{
 		Title: "Hello - jst.dev",
 		Meta:  web.Meta{"description": "Hello"},
 	})))
-	mux.HandleFunc("/hello", web.HandlerHelloWeb)
-	mux.HandleFunc("/blog", web.HandlerBlogWeb(s.Repo))
+	mux.HandleFunc("/blog", web.HandlerBlogWeb(s.RepoTurso))
 	// Wrap the mux with CORS middleware
 	return s.corsMiddleware(mux)
 }
@@ -54,7 +56,7 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandlerLanding(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]string{"message": "Hello World"}
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
@@ -70,7 +72,7 @@ func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	var status string
 
-	err := s.Repo.Health()
+	err := s.RepoTurso.Health()
 	if err != nil {
 		status = "DOWN"
 	} else {

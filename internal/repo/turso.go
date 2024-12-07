@@ -70,13 +70,16 @@ type Author struct {
 
 // BlogPostsFeatured returns a list of featured blog posts
 // TODO: implement
-func (t *TursoRepo) BlogPostsFeatured(page, pageSize int) ([]BlogPost, error) {
-	if page < 0 || pageSize < 0 {
-		return nil, fmt.Errorf("page and pageSize must be greater than 0")
+func (t *TursoRepo) BlogPostsFeatured(limit, offset int) ([]BlogPost, error) {
+	if limit < 0 {
+		return nil, fmt.Errorf("limit must be greater than 0")
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("offset must be greater than 0")
 	}
 
 	posts := []BlogPost{}
-	for i := 0; i < pageSize; i++ {
+	for i := 0; i < limit; i++ {
 		posts = append(posts, BlogPost{
 			Slug:  fmt.Sprintf("%d-%s", i, "slug"),
 			Title: "Boost your creativity",

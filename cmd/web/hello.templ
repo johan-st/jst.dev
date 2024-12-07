@@ -1,18 +1,36 @@
 package web
 
-templ HelloForm(base DataBase) {
+import "jst.dev/internal/repo"
+
+
+templ MsgForm(base DataBase) {
 @Base(base) {
-<form hx-post="/hello" method="POST" hx-target="#hello-container">
-	<input class="bg-slate-800 text-slate-50 p-2 border border-slate-700 rounded-lg" id="name" name="name"
+<script type="text/javascript">
+	function handleClick(event) {
+		alert(event + ' clicked');
+	}
+</script>
+<form hx-post="/api/v1/messages" method="POST" hx-target="#messages-container" hx-swap="afterbegin">
+	<label for="message">Message</label>
+	<input class="bg-slate-800 text-slate-50 p-2 border border-slate-700 rounded-lg" id="message" name="message"
 		type="text" />
-	<button type="submit" class="bg-orange-500 hover:bg-orange-700 text-white py-2 px-4 rounded">Submit</button>
+	<button type="submit" class="bg-orange-500 hover:bg-orange-700 text-white py-2 px-4 rounded">Send Message</button>
 </form>
-<div id="hello-container"></div>
+<div id="messages-container"></div>
 }
 }
 
-templ HelloPost(name string) {
+templ Msg(id string, msg string) {
 <div class="bg-green-100 p-4 shadow-md rounded-lg mt-6">
-	<p>Hello, { name }</p>
+	<p class="text-sm text-slate-500">{ id }</p>
+	<p class="text-slate-700">{ msg }</p>
 </div>
+}
+
+templ MsgList(messages []repo.Message) {
+<ul>
+	for _, message := range messages {
+	<li>{ message.Message }</li>
+	}
+</ul>
 }

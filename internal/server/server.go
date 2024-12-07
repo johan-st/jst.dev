@@ -16,7 +16,8 @@ import (
 type Server struct {
 	port int
 
-	Repo *repo.TursoRepo
+	RepoTurso *repo.TursoRepo
+	RepoMsg   *repo.MessageRepo
 }
 
 func NewServer() *http.Server {
@@ -29,13 +30,14 @@ func NewServer() *http.Server {
 		log.Fatalf("HOST is not set")
 	}
 
-	repo, err := repo.NewTursoRepo()
+	repoTurso, err := repo.NewTursoRepo()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	NewServer := &Server{
-		port: port,
-		Repo: repo,
+		port:      port,
+		RepoTurso: repoTurso,
+		RepoMsg:   &repo.MessageRepo{},
 	}
 
 	// Declare Server config
