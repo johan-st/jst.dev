@@ -1,0 +1,16 @@
+package web
+
+var notFoundReporter = templ.NewOnceHandle()
+templ NotFound(data DataBase) {
+@Base(data) {
+<h1>404 Not Found</h1>
+<p>The page you are looking for does not exist.</p>
+@notFoundReporter.Once() {
+<script type="text/javascript">
+    console.log('404 Not Found for: ' + window.location.pathname);
+    fetch('/api/v1/not-found', {
+        method: 'POST',
+        body: JSON.stringify({ path: window.location.pathname }),
+    });
+</script>
+}}}

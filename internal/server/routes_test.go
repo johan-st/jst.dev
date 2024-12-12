@@ -4,12 +4,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
 func TestHandler(t *testing.T) {
 	s := &Server{}
-	server := httptest.NewServer(http.HandlerFunc(s.HandlerLanding))
+	server := httptest.NewServer(http.HandlerFunc(s.handlerRoot))
 	defer server.Close()
 	resp, err := http.Get(server.URL)
 	if err != nil {
@@ -20,12 +21,12 @@ func TestHandler(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status OK; got %v", resp.Status)
 	}
-	expected := "{\"message\":\"Hello World\"}"
+	expected := "<h1>Home</h1>"
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("error reading response body. Err: %v", err)
 	}
-	if expected != string(body) {
+	if !strings.Contains(string(body), expected) {
 		t.Errorf("expected response body to be %v; got %v", expected, string(body))
 	}
 }

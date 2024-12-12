@@ -1,0 +1,10 @@
+:root {
+  --clr-bg: #333;
+  --clr-text: #ccc;
+  --border-radius: 6px;
+}
+
+html {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
