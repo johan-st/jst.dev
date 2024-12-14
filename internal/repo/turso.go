@@ -81,7 +81,7 @@ func (t *TursoRepo) BlogPostsFeatured(limit, offset int) ([]BlogPost, error) {
 	posts := []BlogPost{}
 	for i := 0; i < limit; i++ {
 		posts = append(posts, BlogPost{
-			Slug:  fmt.Sprintf("%d-%s", i, "slug"),
+			Slug:  fmt.Sprintf("%s-%d", "slug", i),
 			Title: "Boost your creativity",
 			Date:  time.Now().AddDate(-1, i, -37).Add(time.Hour * 12),
 			Body:  "body",
@@ -93,6 +93,20 @@ func (t *TursoRepo) BlogPostsFeatured(limit, offset int) ([]BlogPost, error) {
 		})
 	}
 	return posts, nil
+}
+
+func (t *TursoRepo) BlogPostBySlug(slug string) (BlogPost, error) {
+	return BlogPost{
+		Slug:  slug,
+		Title: "Boost your creativity",
+		Date:  time.Now().AddDate(-1, 0, 0).Add(time.Hour * 12),
+		Body:  "#### Boost your creativity\n\nbody for " + slug + "\n\n```\nbody for " + slug + "\n```",
+		Short: "short for " + slug,
+		Author: Author{
+			Name:     "Michael Foster",
+			ImageURL: "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+		},
+	}, nil
 }
 
 // LOG

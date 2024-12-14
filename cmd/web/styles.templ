@@ -1,0 +1,22 @@
+package web
+
+templ baseStyles() {
+<style type="text/css">
+    :root {
+        --clr-bg: #333;
+        --clr-text: #ccc;
+        --border-radius: 6px;
+    }
+
+    html {
+        background-color: var(--clr-bg);
+        color: var(--clr-text);
+    }
+
+    a,
+    a:visited {
+        color: var(--clr-link);
+        text-decoration: none;
+    }
+</style>
+}

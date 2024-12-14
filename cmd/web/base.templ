@@ -1,8 +1,8 @@
 package web
 
 type DataBase struct {
-Title string
-Meta Meta
+	Title string
+	Meta  Meta
 }
 
 type Meta map[string]string
@@ -14,7 +14,7 @@ templ Base(data DataBase) {
 
 <body>
 	@nav()
-	@header()
+	@header(data.Title)
 	<main>
 		{ children... }
 	</main>
@@ -35,27 +35,32 @@ templ head(data DataBase) {
 	<meta name={ key } content={ value } />
 	}
 
-	<link href="assets/css/style.css" rel="stylesheet" />
-	// <link href="assets/css/output.css" rel="stylesheet" />
-	// <script src="assets/js/htmx.min.js"></script>
+	// <link href="/assets/css/reset.css" rel="stylesheet" />
+	// <link href="/assets/css/output.css" rel="stylesheet" />
+	// <script src="/assets/js/htmx.min.js"></script>
+	@baseStyles()
 </head>
 }
 
 
 templ nav() {
-<nav>
-	@navItem("/", "Home")
-	@navItem("/blog", "Blog")
-	@navItem("/about", "About")
+<nav id="nav-top">
+	@navItem("/", "Home", false)
+	@navItem("/blog", "Blog", true)
+	@navItem("/about", "About", false)
 </nav>
 }
 
-templ navItem(href string, text string) {
-<a href={ templ.SafeURL(href) }>{ text }</a>
+css active() {
+	border-bottom: 2px solid #000;
 }
 
-templ header() {
+templ navItem(href string, text string, isActive bool) {
+<a href={ templ.SafeURL(href) } class={templ.KV("active", isActive), templ.KV(active(), isActive)}>{ text }</a>
+}
+
+templ header(title string) {
 <header>
-	<h1>Header</h1>
+	<h1>{ title }</h1>
 </header>
 }

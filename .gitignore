@@ -37,3 +37,5 @@ main
 cmd/web/assets/css/output.css
 tailwindcss
 
+# Templ watch files
+cmd/web/*_templ.txt

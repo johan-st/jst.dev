@@ -17,6 +17,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Register routes
 	mux.HandleFunc("/", s.handlerRoot)
+	mux.HandleFunc("GET /blog", s.handlerBlogIndex)
+	mux.HandleFunc("GET /blog/{slug}", s.handlerBlogPost)
+	mux.HandleFunc("GET /about", s.handlerAbout)
 	mux.HandleFunc("GET /health", s.healthHandler)
 	mux.HandleFunc("GET /websocket", s.websocketHandler)
 
@@ -106,6 +109,48 @@ func (s *Server) websocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		time.Sleep(2 * time.Second)
 	}
+}
+
+func (s *Server) handlerBlogIndex(w http.ResponseWriter, r *http.Request) {
+
+	featuredPosts, err := s.RepoTurso.BlogPostsFeatured(5, 0)
+	if err != nil {
+		http.Error(w, "Failed to get featured posts", http.StatusInternalServerError)
+		return
+	}
+
+	web.Blog(web.DataBase{
+		Title: "Blog",
+		Meta: web.Meta{
+			"description": "Blog",
+		},
+	}, featuredPosts).Render(r.Context(), w)
+}
+
+func (s *Server) handlerBlogPost(w http.ResponseWriter, r *http.Request) {
+	slug := r.URL.Path[len("/blog/"):]
+	post, err := s.RepoTurso.BlogPostBySlug(slug)
+	if err != nil {
+		http.Error(w, "Failed to get post", http.StatusInternalServerError)
+		return
+	}
+
+	web.BlogPost(web.DataBase{
+		Title: post.Title,
+		Meta: web.Meta{
+			"canonical":   r.URL.Path,
+		},
+	}, post).Render(r.Context(), w)
+}
+
+func (s *Server) handlerAbout(w http.ResponseWriter, r *http.Request) {
+
+	web.About(web.DataBase{
+		Title: "About",
+		Meta: web.Meta{
+			"description": "About",
+		},
+	}).Render(r.Context(), w)
 }
 
 // RESPONSE WRITERS
