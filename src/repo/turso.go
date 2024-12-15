@@ -6,10 +6,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	ulid "github.com/oklog/ulid/v2"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
+	"golang.org/x/exp/rand"
 )
 
 type TursoRepo struct {
@@ -55,6 +57,7 @@ func (t *TursoRepo) Health() error {
 
 // BLOG
 type BlogPost struct {
+	Id     ulid.ULID `db:"id"`
 	Title  string    `db:"title"`
 	Date   time.Time `db:"date"`
 	Short  string    `db:"short"`
@@ -112,7 +115,7 @@ func (t *TursoRepo) BlogPostBySlug(slug string) (BlogPost, error) {
 // LOG
 // AccessLog represents a single access request to the service
 type AccessLog struct {
-	ID            int64     `db:"id"`
+	ID            ulid.ULID `db:"id"`
 	Timestamp     time.Time `db:"timestamp"`
 	RemoteAddr    string    `db:"remote_addr"`
 	RequestMethod string    `db:"request_method"`
@@ -240,6 +243,62 @@ func (t *TursoRepo) AccessLogsCount() (int, error) {
 	return count, nil
 }
 
+// UrlShort
+type UrlShort struct {
+	Id        ulid.ULID `db:"id"`
+	ShortCode string    `db:"short_code"`
+	Url       string    `db:"url"`
+}
+
+// UrlShortenerInsert inserts a new url shortener entry into the database
+// 4 chars will result in 1679616000 unique short codes
+func (t *TursoRepo) UrlShortenerInsert(url string) (UrlShort, error) {
+	const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const shortCodeLength = 4
+	id := ulid.Make()
+	maxAttempts := 10
+	// Try up to 10 times to generate a unique short code
+	for attempts := 0; attempts < maxAttempts; attempts++ {
+
+		// Generate a random 4-char short code
+		shortCode := make([]byte, shortCodeLength)
+		for i := 0; i < shortCodeLength; i++ {
+			shortCode[i] = chars[rand.Intn(len(chars))]
+		}
+
+		// Try to insert with the generated short code
+		_, err := t.db.Exec(`
+			INSERT INTO url_shortener (id, short_code, url) 
+			VALUES (?, ?, ?)`,
+			id, string(shortCode), url,
+		)
+
+		if err != nil {
+			// If it's a unique constraint violation, try again
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				continue
+			}
+			return UrlShort{}, err
+		}
+
+		// Successfully inserted
+		return UrlShort{Id: id, ShortCode: string(shortCode), Url: url}, nil
+	}
+
+	return UrlShort{}, fmt.Errorf("failed to generate unique short code after %d attempts", maxAttempts)
+}
+
+func (t *TursoRepo) GetShortUrl(shortCode string) (UrlShort, error) {
+	var url UrlShort
+	err := t.db.QueryRow(`
+		SELECT id, short_code, url
+		FROM url_shortener
+		WHERE short_code = ?`,
+		shortCode,
+	).Scan(&url.Id, &url.ShortCode, &url.Url)
+	return url, err
+}
+
 // MIGRATIONS
 
 func (t *TursoRepo) RunMigrations() error {
@@ -285,6 +344,12 @@ func (t *TursoRepo) RunMigrations() error {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
 			image_url TEXT NOT NULL
+		);`,
+		// v2: Add url shortener table
+		`CREATE TABLE IF NOT EXISTS url_shortener (
+			id TEXT PRIMARY KEY NOT NULL,
+			short_code TEXT NOT NULL UNIQUE,
+			url TEXT NOT NULL
 		);`,
 	}
 

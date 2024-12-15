@@ -1,0 +1,20 @@
+package web
+
+import (
+	"jst.dev/src/repo"
+)
+
+templ NewShortUrl() {
+<form action="/api/short-url" method="post">
+    <input type="text" name="url" placeholder="Enter URL" required>
+    <button type="submit">Create Short URL</button>
+</form>
+}
+
+templ ShortUrlInfo(shortUrl repo.UrlShort, createdAt string) {
+<h1>Short URL Info</h1>
+<p>Created at: { createdAt }</p>
+<p>Short URL: <a href={ templ.SafeURL("https://url.jst.dev/" + shortUrl.ShortCode) }>https://url.jst.dev/{ shortUrl.ShortCode }</a></p>
+<p>Local URL: <a href={ templ.SafeURL("http://localhost:8080/" + shortUrl.ShortCode)  }>http://localhost:8080/{ shortUrl.ShortCode }</a></p>
+<p>Original URL: <a href={ templ.SafeURL(shortUrl.Url) }>{ shortUrl.Url }</a></p>
+}

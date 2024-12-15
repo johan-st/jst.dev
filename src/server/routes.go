@@ -9,22 +9,34 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"jst.dev/cmd/web"
+	"jst.dev/src/repo"
+	"jst.dev/src/web"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 
 	// Register routes
-	mux.HandleFunc("/", s.handlerRoot)
-	mux.HandleFunc("GET /blog", s.handlerBlogIndex)
-	mux.HandleFunc("GET /blog/{slug}", s.handlerBlogPost)
-	mux.HandleFunc("GET /about", s.handlerAbout)
-	mux.HandleFunc("GET /health", s.healthHandler)
-	mux.HandleFunc("GET /websocket", s.websocketHandler)
+	mux.HandleFunc("GET url.jst.dev/", s.handlerShortUrlNew)
+	mux.HandleFunc("GET url.jst.dev/{shortCode}", s.handlerShortUrl)
+	mux.HandleFunc("GET url.jst.dev/i/{shortCode}", s.handlerShortUrlInfo)
+	mux.HandleFunc("GET /url", s.handlerShortUrlNew)
+	mux.HandleFunc("GET /url/{shortCode}", s.handlerShortUrl)
+	mux.HandleFunc("GET /url/i/{shortCode}", s.handlerShortUrlInfo)
+	// mux.HandleFunc("GET /blog", s.handlerBlogIndex)
+	// mux.HandleFunc("GET /blog/{slug}", s.handlerBlogPost)
+	// mux.HandleFunc("GET /about", s.handlerAbout)
+	// mux.HandleFunc("GET /health", s.healthHandler)
+	// mux.HandleFunc("GET /websocket", s.websocketHandler)
 
-	// API
-	mux.HandleFunc("GET /api/v1/messages", web.HandlerApiMessages())
+	// API - Blog
+	// mux.HandleFunc("GET /api/blog-post", s.handlerNotImplemented("list all posts"))
+	// mux.HandleFunc("POST /api/blog-post", s.handlerNotImplemented("create a new post"))
+	// mux.HandleFunc("GET /api/blog-post/{slug}", s.handlerNotImplemented("get post by slug"))
+	// mux.HandleFunc("DELETE /api/blog-post/{slug}", s.handlerNotImplemented("delete post by slug"))
+
+	// // API - Url Shortener
+	mux.HandleFunc("POST /api/short-url", s.handlerShortUrlPost)
 
 	// Serve static files
 	fileServer := http.FileServer(http.FS(web.Files))
@@ -55,23 +67,23 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) handlerRoot(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		web.NotFound(web.DataBase{
+		web.Layout(web.PageContext{
 			Title: "404 Not Found",
 			Meta: web.Meta{
 				"description": "404 Not Found",
 				"canonical":   r.URL.Path,
 				"robots":      "noindex, nofollow",
 			},
-		}).Render(r.Context(), w)
+		}, web.NotFound()).Render(r.Context(), w)
 		return
 	}
-
-	web.Index(web.DataBase{
+	pageContext := web.PageContext{
 		Title: "Home",
 		Meta: web.Meta{
 			"description": "Home",
 		},
-	}).Render(r.Context(), w)
+	}
+	web.Layout(pageContext, web.Index()).Render(r.Context(), w)
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -118,39 +130,95 @@ func (s *Server) handlerBlogIndex(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get featured posts", http.StatusInternalServerError)
 		return
 	}
-
-	web.Blog(web.DataBase{
+	pageContext := web.PageContext{
 		Title: "Blog",
 		Meta: web.Meta{
 			"description": "Blog",
 		},
-	}, featuredPosts).Render(r.Context(), w)
+	}
+
+	web.Layout(pageContext, web.Blog(featuredPosts)).Render(r.Context(), w)
 }
 
 func (s *Server) handlerBlogPost(w http.ResponseWriter, r *http.Request) {
-	slug := r.URL.Path[len("/blog/"):]
+	slug := r.PathValue("slug")
 	post, err := s.RepoTurso.BlogPostBySlug(slug)
 	if err != nil {
 		http.Error(w, "Failed to get post", http.StatusInternalServerError)
 		return
 	}
 
-	web.BlogPost(web.DataBase{
+	web.Layout(web.PageContext{
 		Title: post.Title,
 		Meta: web.Meta{
-			"canonical":   r.URL.Path,
+			"canonical": r.URL.Path,
 		},
-	}, post).Render(r.Context(), w)
+	}, web.BlogPost(post)).Render(r.Context(), w)
+}
+
+func (s *Server) handlerBlogPostEdit(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+	post, err := s.RepoTurso.BlogPostBySlug(slug)
+	if err != nil {
+		http.Error(w, "Failed to get post", http.StatusInternalServerError)
+		return
+	}
+
+	web.Layout(web.PageContext{
+		Title: post.Title + " - Edit",
+		Meta: web.Meta{
+			"canonical": r.URL.Path,
+		},
+	}, web.BlogPostEdit(post)).Render(r.Context(), w)
+}
+
+func (s *Server) handlerBlogPostNew(w http.ResponseWriter, r *http.Request) {
+	web.Layout(web.PageContext{
+		Title: "New Post",
+		Meta: web.Meta{
+			"canonical": r.URL.Path,
+		},
+	}, web.BlogPostNew()).Render(r.Context(), w)
+}
+
+func (s *Server) handlerApiBlogPost(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+	post, err := s.RepoTurso.BlogPostBySlug(slug)
+	if err != nil {
+		http.Error(w, "Failed to get post", http.StatusInternalServerError)
+		return
+	}
+	post.Title = r.FormValue("title")
+	post.Slug = r.FormValue("slug")
+	post.Body = r.FormValue("body")
+
+	http.Redirect(w, r, "/blog/"+post.Slug, http.StatusSeeOther)
+}
+
+func (s *Server) handlerApiBlogPostNew(w http.ResponseWriter, r *http.Request) {
+	post := repo.BlogPost{
+		Title: r.FormValue("title"),
+		Slug:  r.FormValue("slug"),
+		Body:  r.FormValue("body"),
+	}
+	// s.RepoTurso.CreateBlogPost(post)
+	http.Redirect(w, r, "/blog/"+post.Slug+"/edit", http.StatusSeeOther)
 }
 
 func (s *Server) handlerAbout(w http.ResponseWriter, r *http.Request) {
 
-	web.About(web.DataBase{
+	web.Layout(web.PageContext{
 		Title: "About",
 		Meta: web.Meta{
 			"description": "About",
 		},
-	}).Render(r.Context(), w)
+	}, web.About()).Render(r.Context(), w)
+}
+
+func (s *Server) handlerNotImplemented(message string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Not implemented: "+message, http.StatusNotImplemented)
+	}
 }
 
 // RESPONSE WRITERS

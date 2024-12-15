@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"jst.dev/internal/repo"
+	"jst.dev/src/repo"
 )
 
 type Server struct {

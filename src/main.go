@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"jst.dev/internal/server"
+	"jst.dev/src/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
