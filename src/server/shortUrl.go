@@ -10,21 +10,26 @@ import (
 func (s *Server) handlerShortUrl(w http.ResponseWriter, r *http.Request) {
 	shortCode := r.PathValue("shortCode")
 
-	shortUrl, err := s.RepoTurso.GetShortUrl(shortCode)
+	urlRedirect, err := s.RepoTurso.GetShortUrlRedirect(shortCode)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	http.Redirect(w, r, shortUrl.Url, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, urlRedirect, http.StatusTemporaryRedirect)
 }
 
 func (s *Server) handlerShortUrlNew(w http.ResponseWriter, r *http.Request) {
+	shortUrls, err := s.RepoTurso.GetShortUrls()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	web.LayoutMinimal(
 		web.PageContext{
 			Title: "New Short URL",
 		},
-		web.NewShortUrl(),
+		web.NewShortUrl(shortUrls),
 	).Render(r.Context(), w)
 }
 

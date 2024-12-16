@@ -299,6 +299,39 @@ func (t *TursoRepo) GetShortUrl(shortCode string) (UrlShort, error) {
 	return url, err
 }
 
+func (t *TursoRepo) GetShortUrlRedirect(shortCode string) (string, error) {
+	var url string
+	err := t.db.QueryRow(`
+		SELECT url
+		FROM url_shortener
+		WHERE short_code = ?`,
+		shortCode,
+	).Scan(&url)
+	return url, err
+}
+
+func (t *TursoRepo) GetShortUrls() ([]UrlShort, error) {
+	var urls []UrlShort
+	rows, err := t.db.Query(`
+		SELECT id, short_code, url
+		FROM url_shortener
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var url UrlShort
+		err := rows.Scan(&url.Id, &url.ShortCode, &url.Url)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, url)
+	}
+	return urls, nil
+}
+
 // MIGRATIONS
 
 func (t *TursoRepo) RunMigrations() error {

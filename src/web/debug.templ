@@ -1,0 +1,20 @@
+package web
+
+type DebugInfo struct {
+	Pattern string
+	Method string
+	Host string
+	Path string
+}
+
+templ DebugCard(info DebugInfo) {
+<div class="debug-card">
+    <h4>Debug</h4>
+    <h5>request</h5>
+    <p>pattern matched: { info.Pattern }</p>
+    <p>method: { info.Method }</p>
+    <p>host: { info.Host }</p>
+    <p>path: { info.Path }</p>
+</div>
+}
+

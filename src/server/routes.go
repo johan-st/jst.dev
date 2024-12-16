@@ -20,9 +20,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET url.jst.dev/", s.handlerShortUrlNew)
 	mux.HandleFunc("GET url.jst.dev/{shortCode}", s.handlerShortUrl)
 	mux.HandleFunc("GET url.jst.dev/i/{shortCode}", s.handlerShortUrlInfo)
-	mux.HandleFunc("GET /url", s.handlerShortUrlNew)
+	mux.HandleFunc("GET /url/", s.handlerShortUrlNew)
 	mux.HandleFunc("GET /url/{shortCode}", s.handlerShortUrl)
 	mux.HandleFunc("GET /url/i/{shortCode}", s.handlerShortUrlInfo)
+	mux.HandleFunc("GET /", s.handlerNotFound())
 	// mux.HandleFunc("GET /blog", s.handlerBlogIndex)
 	// mux.HandleFunc("GET /blog/{slug}", s.handlerBlogPost)
 	// mux.HandleFunc("GET /about", s.handlerAbout)
@@ -213,6 +214,25 @@ func (s *Server) handlerAbout(w http.ResponseWriter, r *http.Request) {
 			"description": "About",
 		},
 	}, web.About()).Render(r.Context(), w)
+}
+
+func (s *Server) handlerNotFound() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		info := web.DebugInfo{
+			Pattern: r.URL.Path,
+			Method:  r.Method,
+			Host:    r.Host,
+			Path:    r.URL.Path,
+		}
+		web.Layout(web.PageContext{
+			Title: "Not Found",
+			Meta: web.Meta{
+				"canonical": r.URL.Path,
+			},
+		},
+			web.NotFoundWithDebug(info),
+		).Render(r.Context(), w)
+	}
 }
 
 func (s *Server) handlerNotImplemented(message string) http.HandlerFunc {
