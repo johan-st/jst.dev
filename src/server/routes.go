@@ -14,16 +14,20 @@ import (
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
+	navItems := navItems{
+		{Text: "Home", Href: "/", Active: false},
+		{Text: "Url", Href: "/url", Active: false},
+	}
 	mux := http.NewServeMux()
 
 	// Register routes
-	mux.HandleFunc("GET url.jst.dev/", s.handlerShortUrlNew)
-	mux.HandleFunc("GET url.jst.dev/{shortCode}", s.handlerShortUrl)
-	mux.HandleFunc("GET url.jst.dev/i/{shortCode}", s.handlerShortUrlInfo)
-	mux.HandleFunc("GET /url/", s.handlerShortUrlNew)
-	mux.HandleFunc("GET /url/{shortCode}", s.handlerShortUrl)
-	mux.HandleFunc("GET /url/i/{shortCode}", s.handlerShortUrlInfo)
-	mux.HandleFunc("GET /", s.handlerNotFound())
+	mux.HandleFunc("GET url.jst.dev/", s.handlerShortUrlNew(navItems.at("/url")))
+	mux.HandleFunc("GET url.jst.dev/{shortCode}", s.handlerShortUrl())
+	mux.HandleFunc("GET url.jst.dev/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
+	mux.HandleFunc("GET /url/", s.handlerShortUrlNew(navItems.at("/url")))
+	mux.HandleFunc("GET /url/{shortCode}", s.handlerShortUrl())
+	mux.HandleFunc("GET /url/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
+	mux.HandleFunc("GET /", s.handlerRoot(navItems.at("/")))
 	// mux.HandleFunc("GET /blog", s.handlerBlogIndex)
 	// mux.HandleFunc("GET /blog/{slug}", s.handlerBlogPost)
 	// mux.HandleFunc("GET /about", s.handlerAbout)
@@ -37,7 +41,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// mux.HandleFunc("DELETE /api/blog-post/{slug}", s.handlerNotImplemented("delete post by slug"))
 
 	// // API - Url Shortener
-	mux.HandleFunc("POST /api/short-url", s.handlerShortUrlPost)
+	mux.HandleFunc("POST /api/short-url", s.handlerShortUrlPost())
 
 	// Serve static files
 	fileServer := http.FileServer(http.FS(web.Files))
@@ -66,25 +70,28 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) handlerRoot(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		web.Layout(web.PageContext{
-			Title: "404 Not Found",
+func (s *Server) handlerRoot(navItems navItems) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			web.Layout(web.PageContext{
+				Title: "404 Not Found",
+				Meta: web.Meta{
+					"description": "404 Not Found",
+					"canonical":   r.URL.Path,
+					"robots":      "noindex, nofollow",
+				},
+			}, web.NotFound()).Render(r.Context(), w)
+			return
+		}
+		pageContext := web.PageContext{
+			Title: "Home",
 			Meta: web.Meta{
-				"description": "404 Not Found",
-				"canonical":   r.URL.Path,
-				"robots":      "noindex, nofollow",
+				"description": "Home",
 			},
-		}, web.NotFound()).Render(r.Context(), w)
-		return
+			TopNav: navItems,
+		}
+		web.Layout(pageContext, web.Index()).Render(r.Context(), w)
 	}
-	pageContext := web.PageContext{
-		Title: "Home",
-		Meta: web.Meta{
-			"description": "Home",
-		},
-	}
-	web.Layout(pageContext, web.Index()).Render(r.Context(), w)
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -246,4 +253,20 @@ func (s *Server) handlerNotImplemented(message string) http.HandlerFunc {
 func writeJSON(w http.ResponseWriter, v any) error {
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(v)
+}
+
+// HELPERS
+
+type navItems []web.NavItem
+
+// At returns a new navItems slice with the item at the given href set to active
+func (ns navItems) at(href string) navItems {
+	new := make(navItems, len(ns))
+	for i, it := range ns {
+		new[i] = it
+		if it.Href == href {
+			new[i].Active = true
+		}
+	}
+	return new
 }

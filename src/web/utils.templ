@@ -1,0 +1,24 @@
+package web
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/oklog/ulid/v2"
+)
+
+templ timeStamp(t time.Time) {
+<span title={ t.Format(time.RFC3339) }>
+    { t.Format("2006-01-02 15:04:05") }
+</span>
+}
+
+templ timeStampFromUlid(id ulid.ULID) {
+{{
+unixSeconds := int64(id.Time()) / 1000
+unixNano := (int64(id.Time()) % 1000) * 10
+}}
+<span title={ fmt.Sprintf("%d.%d", unixSeconds, unixNano) }>
+    { time.Unix(unixSeconds, unixNano).Format("2006-01-02 15:04:05") }
+</span>
+}

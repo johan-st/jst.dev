@@ -4,13 +4,22 @@ import (
 "jst.dev/src/repo"
 )
 
-templ NewShortUrl(shortUrls []repo.UrlShort) {
+type NewShortUrlResult struct {
+ShortUrl *repo.UrlShort
+Error error
+}
+
+templ ShortUrl(shortUrls []repo.UrlShort, result NewShortUrlResult) {
 <form action="/api/short-url" method="post">
     <input type="text" name="url" placeholder="Enter URL" required>
     <button type="submit">Create Short URL</button>
 </form>
-<hr>
-<h2>Short URLs</h2>
+@shortUrlResult(result)
+@shortUrlList(shortUrls)
+
+}
+
+templ shortUrlList(shortUrls []repo.UrlShort) {
 <p>click for info</p>
 <ul>
     for _, shortUrl := range shortUrls {
@@ -21,9 +30,21 @@ templ NewShortUrl(shortUrls []repo.UrlShort) {
 </ul>
 }
 
-templ ShortUrlInfo(shortUrl repo.UrlShort, createdAt string) {
-<h1>Short URL Info</h1>
-<p>Created at: { createdAt }</p>
-<p>Short URL: <a href={ templ.SafeURL("https://url.jst.dev/" + shortUrl.ShortCode) }>url.jst.dev/{ shortUrl.ShortCode }</a></p>
+templ ShortUrlInfo(shortUrl *repo.UrlShort) {
+<p>Created at: 
+@timeStampFromUlid(shortUrl.Id)
+</p>
+<p>Short URL: <a href={ templ.SafeURL("https://url.jst.dev/" + shortUrl.ShortCode) }>url.jst.dev/{ shortUrl.ShortCode
+        }</a></p>
 <p>Original URL: <a href={ templ.SafeURL(shortUrl.Url) }>{ shortUrl.Url }</a></p>
+}
+
+templ shortUrlResult(result NewShortUrlResult) {
+if result.Error != nil {
+    <div class="error">
+        <p>Error: { result.Error.Error() }</p>
+    </div>
+} else if result.ShortUrl != nil {
+    @ShortUrlInfo(result.ShortUrl)
+}
 }

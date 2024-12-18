@@ -3,20 +3,26 @@ package web
 type PageContext struct {
 	Title string
 	Meta Meta
-	// TopNav []NavItem
+	TopNav []NavItem
+}
+
+type NavItem struct {
+	Text string
+	Href string
+	Active bool
 }
 
 type Meta map[string]string
 
 templ Layout(pageContext PageContext, main templ.Component) {
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="w-full h-full text-slate-100 bg-slate-900">
 @head(pageContext)
 
-<body>
-	@nav()
+<body class="w-full h-full">
+	@nav(pageContext.TopNav)
 	@header(pageContext.Title)
-	<main>
+	<main class="w-full h- flex flex-col items-center justify-center ">
 		@main
 	</main>
 </body>
@@ -49,31 +55,29 @@ templ head(data PageContext) {
 	<meta name={ key } content={ value } />
 	}
 
-	// <link href="/assets/css/reset.css" rel="stylesheet" />
-	// <link href="/assets/css/output.css" rel="stylesheet" />
+	<link href="/assets/css/reset.css" rel="stylesheet" />
+	<link href="/assets/css/output.css" rel="stylesheet" />
 	// <script src="/assets/js/htmx.min.js"></script>
+	<script src="/assets/js/pixi.js"></script>
 	@baseStyles()
 </head>
 }
 
 
-templ nav() {
-<nav id="nav-top">
-	@navItem("/", "home", false)
-	@navItem("/url", "url", false)
+templ nav(navItems []NavItem) {
+<nav id="nav-top" class="flex px-4 py-2 gap-4 bg-slate-800">
+	for _, item := range navItems {
+		@navItem(item.Href, item.Text, item.Active)
+	}
 </nav>
 }
 
-css active() {
-border-bottom: 2px solid #000;
-}
-
 templ navItem(href string, text string, isActive bool) {
-<a href={ templ.SafeURL(href) } class={templ.KV("active", isActive), templ.KV(active(), isActive)} hx-boost="true">{ text }</a>
+<a href={ templ.SafeURL(href) } class={templ.KV("active border-b-2 border-slate-50 text-slate-50", isActive)} hx-boost="true">{ text }</a>
 }
 
 templ header(title string) {
-<header>
-	<h1>{ title }</h1>
+<header class="px-4 py-2 w-full border-t-2 border-slate-700">
+	<h1 class="text-4xl font-bold">{ title }</h1>
 </header>
 }

@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./main"
-  cmd = "make build"
+  cmd = "./build-run.sh"
   delay = 1000
   exclude_dir = ["tmp", "vendor", "testdata", "node_modules"]
   exclude_file = []
