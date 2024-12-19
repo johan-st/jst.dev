@@ -27,7 +27,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET /url/", s.handlerShortUrlNew(navItems.at("/url")))
 	mux.HandleFunc("GET /url/{shortCode}", s.handlerShortUrl())
 	mux.HandleFunc("GET /url/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
-	mux.HandleFunc("GET /", s.handlerRoot(navItems.at("/")))
+	mux.HandleFunc("GET /", s.handlerRoot(navItems.at("/"), navItems.at("/404")))
 	// mux.HandleFunc("GET /blog", s.handlerBlogIndex)
 	// mux.HandleFunc("GET /blog/{slug}", s.handlerBlogPost)
 	// mux.HandleFunc("GET /about", s.handlerAbout)
@@ -70,7 +70,7 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) handlerRoot(navItems navItems) http.HandlerFunc {
+func (s *Server) handlerRoot(navItemsIndex, navItemsNotFound navItems) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			web.Layout(web.PageContext{
@@ -80,6 +80,7 @@ func (s *Server) handlerRoot(navItems navItems) http.HandlerFunc {
 					"canonical":   r.URL.Path,
 					"robots":      "noindex, nofollow",
 				},
+				TopNav: navItemsNotFound,
 			}, web.NotFound()).Render(r.Context(), w)
 			return
 		}
@@ -88,7 +89,11 @@ func (s *Server) handlerRoot(navItems navItems) http.HandlerFunc {
 			Meta: web.Meta{
 				"description": "Home",
 			},
-			TopNav: navItems,
+			TopNav:  navItemsIndex,
+			Scripts: []web.ScriptTag{
+				// {Src: "/assets/js/pixi.js", Async: true, Defer: false},
+				// {Src: "/assets/js/pageIndex.mjs", Async: true, Defer: true},
+			},
 		}
 		web.Layout(pageContext, web.Index()).Render(r.Context(), w)
 	}
