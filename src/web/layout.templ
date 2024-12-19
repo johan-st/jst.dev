@@ -4,6 +4,7 @@ type PageContext struct {
 	Title string
 	Meta Meta
 	TopNav []NavItem
+	Scripts []ScriptTag
 }
 
 type NavItem struct {
@@ -12,11 +13,17 @@ type NavItem struct {
 	Active bool
 }
 
+type ScriptTag struct {
+	Src   string
+	Async bool
+	Defer bool
+}
+
 type Meta map[string]string
 
 templ Layout(pageContext PageContext, main templ.Component) {
 <!DOCTYPE html>
-<html lang="en" class="w-full h-full text-slate-100 bg-slate-900">
+<html lang="en" class="w-full h-full text-slate-100 bg-slate-800">
 @head(pageContext)
 
 <body class="w-full h-full">
@@ -54,18 +61,23 @@ templ head(data PageContext) {
 	for key, value := range data.Meta {
 	<meta name={ key } content={ value } />
 	}
+	// Tailwind PLAY, dev only
+	// <script src="https://cdn.tailwindcss.com"></script>
 
 	<link href="/assets/css/reset.css" rel="stylesheet" />
 	<link href="/assets/css/output.css" rel="stylesheet" />
 	// <script src="/assets/js/htmx.min.js"></script>
-	<script src="/assets/js/pixi.js"></script>
+	// <script src="/assets/js/pixi.js"></script>
+	for _, script := range data.Scripts {
+		@scriptTag(script)
+	}
 	@baseStyles()
 </head>
 }
 
 
 templ nav(navItems []NavItem) {
-<nav id="nav-top" class="flex px-4 py-2 gap-4 bg-slate-800">
+<nav id="nav-top" class="flex gap-4 px-4 py-2 sticky top-0 z-40 w-full backdrop-blur flex-none border-b border-slate-900/10">
 	for _, item := range navItems {
 		@navItem(item.Href, item.Text, item.Active)
 	}
@@ -74,6 +86,18 @@ templ nav(navItems []NavItem) {
 
 templ navItem(href string, text string, isActive bool) {
 <a href={ templ.SafeURL(href) } class={templ.KV("active border-b-2 border-slate-50 text-slate-50", isActive)} hx-boost="true">{ text }</a>
+}
+
+templ scriptTag(script ScriptTag) {
+	if script.Async && script.Defer {
+		<script src={ script.Src } async defer></script>
+	} else if script.Async {
+		<script src={ script.Src } async></script>
+	} else if script.Defer {
+		<script src={ script.Src } defer></script>
+	} else {
+		<script src={ script.Src }></script>
+	}
 }
 
 templ header(title string) {

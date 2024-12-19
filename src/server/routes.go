@@ -91,8 +91,7 @@ func (s *Server) handlerRoot(navItemsIndex, navItemsNotFound navItems) http.Hand
 			},
 			TopNav:  navItemsIndex,
 			Scripts: []web.ScriptTag{
-				// {Src: "/assets/js/pixi.js", Async: true, Defer: false},
-				// {Src: "/assets/js/pageIndex.mjs", Async: true, Defer: true},
+				{Src: "/assets/js/page/index.js", Async: true, Defer: true},
 			},
 		}
 		web.Layout(pageContext, web.Index()).Render(r.Context(), w)
