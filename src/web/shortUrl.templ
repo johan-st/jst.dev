@@ -9,48 +9,93 @@ ShortUrl *repo.UrlShort
 Error string
 }
 
-templ ShortUrl() {
+templ ShortUrl(shortUrls []repo.UrlShort) {
 @stylesForm()
-<div class="form-wrapper">
-    <form action="/api/short-url" method="post">
-        <label for="url" class="block">URL</label>
-        <input type="text" name="url" id="url" required
-            class="block w-full grow py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-0"
-            placeholder="www.example.com/some/long?path=here">
-        <button class="bg-blue-500 text-white p-2 rounded-md" type="submit">Create Short URL</button>
-        <details>
-            <summary>info</summary>
-            <ul>
-                <li>must have a host</li>
-                <li>when no scheme is provided, https will be assumed</li>
-                <li>otherwise, the validation is very permissive</li>
-            </ul>
-        </details>
-    </form>
-</div>
+<form action="/api/short-url" method="post">
+    <label for="url">URL</label>
+    <input type="text" name="url" id="url" required placeholder="www.example.com">
+    <button type="submit">Create Short URL</button>
+    <details>
+        <summary>info</summary>
+        <ul>
+            <li>must have a host</li>
+            <li>when no scheme is provided, https will be assumed</li>
+            <li>otherwise, the validation is very permissive</li>
+        </ul>
+    </details>
+</form>
 // @shortUrlResult(result)
-// @shortUrlList(shortUrls)
+@shortUrlList(shortUrls)
 
 }
 
+
+
+css shortUrlListItem() {
+
+}
+
+css shortUrlListItemLink() {
+}
+
 templ shortUrlList(shortUrls []repo.UrlShort) {
-<p>click for info</p>
-<ul>
+<style>
+    .short-url-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .short-url-list__item {
+        font-family: var(--font-mono);
+        border: 1px solid var(--clr-border);
+        border-radius: var(--border-radius);
+    }
+
+    .short-url-list__item-link:hover {
+        background: var(--clr-bg-alt);
+        border-radius: var(--border-radius);
+    }
+
+    .short-url-list__item-link {
+        padding: 8px 15px;
+        display: block;
+    }
+</style>
+<p>click a short url for info</p>
+<ul class="short-url-list">
     for _, shortUrl := range shortUrls {
-    <li>
-        <a href={ templ.SafeURL("i/" + shortUrl.ShortCode) }>/{ shortUrl.ShortCode } > { shortUrl.Url }</a>
+    <li class={ "short-url-list__item" }>
+        <a class={ "short-url-list__item-link" } href={ templ.SafeURL("i/" + shortUrl.ShortCode) }>{
+            shortUrl.ShortCode }<br> { shortUrl.Url }</a>
     </li>
     }
 </ul>
 }
 
+
+
+
+
+css shortUrlInfo() {
+display: flex;
+flex-direction: column;
+gap: 10px;
+padding: 10px;
+border: 1px solid var(--clr-border);
+border-radius: var(--border-radius);
+}
+
 templ ShortUrlInfo(shortUrl *repo.UrlShort) {
-<p>Created at:
-    @timeStampFromUlid(shortUrl.Id)
-</p>
-<p>Short URL: <a href={ templ.SafeURL("https://u.jst.dev/" + shortUrl.ShortCode) }>u.jst.dev/{ shortUrl.ShortCode
-        }</a></p>
-<p>Original URL: <a href={ templ.SafeURL(shortUrl.Url) }>{ shortUrl.Url }</a></p>
+
+<div class={ "short-url-info" , shortUrlInfo() }>
+    <p>Created at:
+        @timeStampFromUlid(shortUrl.Id)
+    </p>
+    <p>Short URL: <a href={ templ.SafeURL("https://u.jst.dev/" + shortUrl.ShortCode) }>u.jst.dev/{ shortUrl.ShortCode
+            }</a></p>
+    <p>Original URL: <a href={ templ.SafeURL(shortUrl.Url) }>{ shortUrl.Url }</a></p>
+</div>
 }
 
 templ shortUrlResult(result NewShortUrlResult) {

@@ -4,20 +4,102 @@ templ stylesBase() {
 <style type="text/css">
     :root {
         --clr-bg: #333;
-        --clr-text: #ccc;
+        --clr-bg-alt: #444;
+        --clr-text: #f80;
+        --clr-text-alt: #ccc;
+        --clr-border: #888;
+        --clr-border-alt: #666;
         --border-radius: 6px;
+        --font: 'Roboto', sans-serif;
+        --font-mono: 'Roboto Mono', monospace;
+    }
+
+    html {
+        color: var(--clr-text-alt);
+        background-color: var(--clr-bg);
+        border-radius: var(--border-radius);
+        font-family: var(--font);
+        font-size: 16px;
+        line-height: 1.5;
+        font-weight: 400;
+    }
+
+    h1 {
+        padding: 24px 0 12px;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    #nav-top {
+        padding: 12px 0;
+        color: var(--clr-text-alt);
+        border-bottom: 1px solid var(--clr-border);
+    }
+
+    .nav-top__item {
+        padding: 5px 10px;
+        border: 1px solid transparent;
+
+    }
+
+    #nav-top:hover .nav-top__item {
+        color: var(--clr-text);
+        border-color: var(--clr-border);
+    }
+
+    .nav-top__wrapper {
+        display: flex;
+        gap: 10px;
+        margin: 0 auto;
+    }
+
+    .nav-top__item.active {
+        border-bottom: 3px solid;
+    }
+
+    #nav-top .nav-top__item:hover {
+        border-color: var(--clr-border-alt);
+        border-bottom-color: var(--clr-text);
+        border-bottom-width: 3px;
+
+    }
+
+    main {
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .nav-top__wrapper,
+    #header-top,
+    main,
+    footer {
+        max-width: 780px;
+        margin: 0 auto;
+    }
+
+    .nav-top__wrapper,
+    header,
+    main,
+    footer {
+        padding: 0 10px;
+
+    }
+
+    footer {
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: end;
+        align-items: center;
+        padding-bottom: 10px;
     }
 </style>
 }
 
 templ stylesForm() {
 <style type="text/css">
-    .form-wrapper {
-        padding: 20px;
-        width: 100%;
-
-    }
-
     form {
         display: flex;
         flex-direction: column;
@@ -27,6 +109,37 @@ templ stylesForm() {
 
         border: 1px solid #888;
         border-radius: 5px;
+    }
+
+    input {
+        border: 1px solid var(--clr-border);
+        border-radius: var(--border-radius);
+        background: var(--clr-bg-alt);
+        color: var(--clr-text-alt);
+        padding: 5px 10px;
+    }
+
+    input:focus {
+        border-color: var(--clr-text);
+    }
+
+    input:focus-visible {
+        outline: 1px solid var(--clr-text);
+    }
+
+    button {
+        background: var(--clr-bg-alt);
+        color: var(--clr-text-alt);
+        border: 1px solid var(--clr-border);
+        border-radius: var(--border-radius);
+        padding: 15px 20px;
+        width: max-content;
+        margin: 0 0 0 auto;
+    }
+
+    button:hover {
+        background: var(--clr-bg);
+        color: var(--clr-text);
     }
 </style>
 }

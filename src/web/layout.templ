@@ -1,37 +1,38 @@
 package web
 
 type PageContext struct {
-	Title string
-	Meta Meta
-	TopNav []NavItem
-	Scripts []ScriptTag
+Title string
+Meta Meta
+TopNav []NavItem
+Scripts []ScriptTag
 }
 
 type NavItem struct {
-	Text string
-	Href string
-	Active bool
+Text string
+Href string
+Active bool
 }
 
 type ScriptTag struct {
-	Src   string
-	Async bool
-	Defer bool
+Src string
+Async bool
+Defer bool
 }
 
 type Meta map[string]string
 
 templ Layout(pageContext PageContext, main templ.Component) {
 <!DOCTYPE html>
-<html lang="en" class="w-full h-full text-slate-100 bg-slate-800 box-border">
+<html lang="en">
 @head(pageContext)
 
-<body class="w-full h-full">
+<body>
 	@nav(pageContext.TopNav)
 	@header(pageContext.Title)
-	<main class="w-full h- flex flex-col items-center justify-center ">
+	<main>
 		@main
 	</main>
+	@footer()
 </body>
 
 </html>
@@ -65,43 +66,53 @@ templ head(data PageContext) {
 	// <script src="https://cdn.tailwindcss.com"></script>
 
 	<link href="/assets/css/reset.css" rel="stylesheet" />
-	<link href="/assets/css/output.css" rel="stylesheet" />
+	// <link href="/assets/css/output.css" rel="stylesheet" />
 	// <script src="/assets/js/htmx.min.js"></script>
 	// <script src="/assets/js/pixi.js"></script>
 	for _, script := range data.Scripts {
-		@scriptTag(script)
+	@scriptTag(script)
 	}
 	@stylesBase()
 </head>
 }
 
 
+
 templ nav(navItems []NavItem) {
-<nav id="nav-top" class="flex gap-4 px-4 py-2 sticky top-0 z-40 w-full backdrop-blur flex-none border-b border-slate-900/10">
-	for _, item := range navItems {
+<nav id="nav-top">
+	<div class="nav-top__wrapper">
+		for _, item := range navItems {
 		@navItem(item.Href, item.Text, item.Active)
-	}
+		}
+	</div>
 </nav>
 }
 
 templ navItem(href string, text string, isActive bool) {
-<a href={ templ.SafeURL(href) } class={templ.KV("active border-b-2 border-slate-50 text-slate-50", isActive)} hx-boost="true">{ text }</a>
+<a href={ templ.SafeURL(href) } class={ "nav-top__item" , templ.KV("active", isActive) } hx-boost="true">{ text }</a>
 }
 
 templ scriptTag(script ScriptTag) {
-	if script.Async && script.Defer {
-		<script src={ script.Src } async defer></script>
-	} else if script.Async {
-		<script src={ script.Src } async></script>
-	} else if script.Defer {
-		<script src={ script.Src } defer></script>
-	} else {
-		<script src={ script.Src }></script>
-	}
+if script.Async && script.Defer {
+<script src={ script.Src } async defer></script>
+} else if script.Async {
+<script src={ script.Src } async></script>
+} else if script.Defer {
+<script src={ script.Src } defer></script>
+} else {
+<script src={ script.Src }></script>
+}
 }
 
+
 templ header(title string) {
-<header class="px-4 py-2 w-full border-t-2 border-slate-700">
-	<h1 class="text-4xl font-bold">{ title }</h1>
+<header id="header-top">
+	<h1>{ title }</h1>
 </header>
+}
+
+templ footer() {
+<footer id="footer-bottom">
+	<a href="mailto:jst@jst.dev">jst@jst.dev</a>
+</footer>
 }

@@ -26,12 +26,17 @@ func (s *Server) handlerShortUrl() http.HandlerFunc {
 
 func (s *Server) handlerShortUrlNew(navItems navItems) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		shortUrls, err := s.RepoTurso.GetShortUrls()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		web.Layout(
 			web.PageContext{
 				Title:  "New Short URL",
 				TopNav: navItems,
 			},
-			web.ShortUrl(),
+			web.ShortUrl(shortUrls),
 		).Render(r.Context(), w)
 	}
 }
