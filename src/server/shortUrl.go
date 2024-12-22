@@ -1,8 +1,12 @@
 package server
 
 import (
+	"errors"
 	"net/http"
+	"net/url"
+	"strings"
 
+	"jst.dev/src/repo"
 	"jst.dev/src/web"
 )
 
@@ -22,31 +26,37 @@ func (s *Server) handlerShortUrl() http.HandlerFunc {
 
 func (s *Server) handlerShortUrlNew(navItems navItems) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		shortUrls, err := s.RepoTurso.GetShortUrls()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 		web.Layout(
 			web.PageContext{
-				Title: "New Short URL",
+				Title:  "New Short URL",
 				TopNav: navItems,
 			},
-			web.ShortUrl(shortUrls, web.NewShortUrlResult{}),
+			web.ShortUrl(),
 		).Render(r.Context(), w)
 	}
 }
 
 func (s *Server) handlerShortUrlPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		shortUrl, err := s.RepoTurso.UrlShortenerInsert(r.FormValue("url"))
-		var location string
+		var (
+			parsedUrl *url.URL
+			shortUrl  repo.UrlShort
+			err       error
+			location  string
+		)
+
+		parsedUrl, err = validateAndParseUrl(r.FormValue("url"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		shortUrl, err = s.RepoTurso.UrlShortenerInsert(parsedUrl)
 		if r.Host == "url.jst.dev" {
 			location = "https://url.jst.dev/i/" + shortUrl.ShortCode
 		} else {
 			location = "/url/i/" + shortUrl.ShortCode
 		}
-
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -56,11 +66,6 @@ func (s *Server) handlerShortUrlPost() http.HandlerFunc {
 }
 
 func (s *Server) handlerShortUrlInfo(navItems navItems) http.HandlerFunc {
-	for _, it := range navItems {
-		if it.Href == "/url" {
-			it.Active = true
-		}
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		shortCode := r.PathValue("shortCode")
 
@@ -80,3 +85,38 @@ func (s *Server) handlerShortUrlInfo(navItems navItems) http.HandlerFunc {
 	}
 }
 
+func (s *Server) handlerShortUrlRedirectToInfo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		shortCode := r.PathValue("shortCode")
+		http.Redirect(w, r, "/url/i/"+shortCode, http.StatusMovedPermanently)
+	}
+}
+
+func validateAndParseUrl(u string) (*url.URL, error) {
+	parsedUrl, err := url.Parse(u)
+	if err != nil {
+		return nil, err
+	}
+
+	// If there's no scheme but there is a path, the host might be in the path
+	if parsedUrl.Scheme == "" && parsedUrl.Host == "" && parsedUrl.Path != "" {
+		// Split on first "/" to separate host from path
+		parts := strings.SplitN(parsedUrl.Path, "/", 2)
+		parsedUrl.Host = parts[0]
+		if len(parts) > 1 {
+			parsedUrl.Path = "/" + parts[1]
+		} else {
+			parsedUrl.Path = ""
+		}
+	}
+
+	// Set default scheme if missing
+	if parsedUrl.Scheme == "" {
+		parsedUrl.Scheme = "https"
+	}
+
+	if parsedUrl.Host == "" {
+		return nil, errors.New("host is required")
+	}
+	return parsedUrl, nil
+}

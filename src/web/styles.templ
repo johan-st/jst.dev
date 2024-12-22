@@ -1,26 +1,32 @@
 package web
 
-templ baseStyles() {
+templ stylesBase() {
 <style type="text/css">
     :root {
         --clr-bg: #333;
         --clr-text: #ccc;
         --border-radius: 6px;
     }
+</style>
+}
 
-    html {
-        background-color: var(--clr-bg);
-        color: var(--clr-text);
+templ stylesForm() {
+<style type="text/css">
+    .form-wrapper {
+        padding: 20px;
+        width: 100%;
+
     }
 
-    nav {
-        background: radial-gradient(#ffffff08, transparent);
-    }
+    form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding: 20px;
+        gap: 10px;
 
-    a,
-    a:visited {
-        color: var(--clr-link);
-        text-decoration: none;
+        border: 1px solid #888;
+        border-radius: 5px;
     }
 </style>
 }

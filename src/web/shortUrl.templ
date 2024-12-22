@@ -6,16 +6,30 @@ import (
 
 type NewShortUrlResult struct {
 ShortUrl *repo.UrlShort
-Error error
+Error string
 }
 
-templ ShortUrl(shortUrls []repo.UrlShort, result NewShortUrlResult) {
-<form action="/api/short-url" method="post">
-    <input type="text" name="url" placeholder="Enter URL" required>
-    <button type="submit">Create Short URL</button>
-</form>
-@shortUrlResult(result)
-@shortUrlList(shortUrls)
+templ ShortUrl() {
+@stylesForm()
+<div class="form-wrapper">
+    <form action="/api/short-url" method="post">
+        <label for="url" class="block">URL</label>
+        <input type="text" name="url" id="url" required
+            class="block w-full grow py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-0"
+            placeholder="www.example.com/some/long?path=here">
+        <button class="bg-blue-500 text-white p-2 rounded-md" type="submit">Create Short URL</button>
+        <details>
+            <summary>info</summary>
+            <ul>
+                <li>must have a host</li>
+                <li>when no scheme is provided, https will be assumed</li>
+                <li>otherwise, the validation is very permissive</li>
+            </ul>
+        </details>
+    </form>
+</div>
+// @shortUrlResult(result)
+// @shortUrlList(shortUrls)
 
 }
 
@@ -31,20 +45,20 @@ templ shortUrlList(shortUrls []repo.UrlShort) {
 }
 
 templ ShortUrlInfo(shortUrl *repo.UrlShort) {
-<p>Created at: 
-@timeStampFromUlid(shortUrl.Id)
+<p>Created at:
+    @timeStampFromUlid(shortUrl.Id)
 </p>
-<p>Short URL: <a href={ templ.SafeURL("https://url.jst.dev/" + shortUrl.ShortCode) }>url.jst.dev/{ shortUrl.ShortCode
+<p>Short URL: <a href={ templ.SafeURL("https://u.jst.dev/" + shortUrl.ShortCode) }>u.jst.dev/{ shortUrl.ShortCode
         }</a></p>
 <p>Original URL: <a href={ templ.SafeURL(shortUrl.Url) }>{ shortUrl.Url }</a></p>
 }
 
 templ shortUrlResult(result NewShortUrlResult) {
-if result.Error != nil {
-    <div class="error">
-        <p>Error: { result.Error.Error() }</p>
-    </div>
+if result.Error != "" {
+<div class="error">
+    <p>Error: { result.Error }</p>
+</div>
 } else if result.ShortUrl != nil {
-    @ShortUrlInfo(result.ShortUrl)
+@ShortUrlInfo(result.ShortUrl)
 }
 }

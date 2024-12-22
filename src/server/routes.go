@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"fmt"
 	"time"
@@ -20,16 +21,20 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}
 	mux := http.NewServeMux()
 
-	// Register routes
-	mux.HandleFunc("GET url.jst.dev/", s.handlerShortUrlNew(navItems.at("/url")))
-	mux.HandleFunc("GET url.jst.dev/{shortCode}", s.handlerShortUrl())
-	mux.HandleFunc("GET url.jst.dev/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
-	mux.HandleFunc("GET u.jst.dev/", s.handlerShortUrlNew(navItems.at("/url")))
+	// REGISTER ROUTES
+
+	// URL Shortener
+	// - handle short url redirects
 	mux.HandleFunc("GET u.jst.dev/{shortCode}", s.handlerShortUrl())
-	mux.HandleFunc("GET u.jst.dev/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
-	mux.HandleFunc("GET /url/", s.handlerShortUrlNew(navItems.at("/url")))
-	mux.HandleFunc("GET /url/{shortCode}", s.handlerShortUrl())
+	mux.HandleFunc("GET url.jst.dev/{shortCode}", s.handlerShortUrl())
+	// - handle short url info
 	mux.HandleFunc("GET /url/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
+	// - handle short url new
+	mux.HandleFunc("GET /url/", s.handlerShortUrlNew(navItems.at("/url")))
+	// - handle short url internal redirect
+	mux.HandleFunc("GET /url/{shortCode}", s.handlerRedirectWithUrlParam("/url/i/{shortCode}", []string{"shortCode"}, http.StatusMovedPermanently))
+
+	// - handle root
 	mux.HandleFunc("GET /", s.handlerRoot(navItems.at("/"), navItems.at("/404")))
 	// mux.HandleFunc("GET /blog", s.handlerBlogIndex)
 	// mux.HandleFunc("GET /blog/{slug}", s.handlerBlogPost)
@@ -56,9 +61,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// s.debugRequest("corsMiddleware", r)
+
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "fly.dev, jst.dev")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
 		w.Header().Set("Access-Control-Allow-Credentials", "false") // Set to "true" if credentials are required
 
@@ -72,9 +79,11 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
+// HANDLERS
 func (s *Server) handlerRoot(navItemsIndex, navItemsNotFound navItems) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// s.debugRequest("handlerRoot", r)
+
 		if r.URL.Path != "/" {
 			web.Layout(web.PageContext{
 				Title: "404 Not Found",
@@ -92,7 +101,7 @@ func (s *Server) handlerRoot(navItemsIndex, navItemsNotFound navItems) http.Hand
 			Meta: web.Meta{
 				"description": "Home",
 			},
-			TopNav:  navItemsIndex,
+			TopNav: navItemsIndex,
 			Scripts: []web.ScriptTag{
 				{Src: "/assets/js/page/index.js", Async: true, Defer: true},
 			},
@@ -255,6 +264,26 @@ func (s *Server) handlerNotImplemented(message string) http.HandlerFunc {
 	}
 }
 
+// handlerRedirectWithUrlParam redirects a request to a given url using the given param keys to replace the placeholders in the url.
+// If the param key is not found in the url, it will panic.
+// example:
+// handlerRedirectWithUrlParam("/url/i/{shortCode}", []string{"shortCode"}, http.StatusMovedPermanently)
+func (s *Server) handlerRedirectWithUrlParam(url string, paramKeys []string, status int) http.HandlerFunc {
+	for _, paramKey := range paramKeys {
+		if !strings.Contains(url, "{"+paramKey+"}") {
+			// Yes! Actually panicing as there is no way to run this handler if the param key is not found in the target url
+			panic("param key not found in url: " + paramKey)
+		}
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		for _, paramKey := range paramKeys {
+			url = strings.Replace(url, "{"+paramKey+"}", r.PathValue(paramKey), len(paramKeys))
+		}
+		http.Redirect(w, r, url, status)
+	}
+}
+
 // RESPONSE WRITERS
 
 func writeJSON(w http.ResponseWriter, v any) error {
@@ -276,4 +305,8 @@ func (ns navItems) at(href string) navItems {
 		}
 	}
 	return new
+}
+
+func (s *Server) debugRequest(tag string, r *http.Request) {
+	log.Printf("%s: %s %s %s, matchedPattern: %s", tag, r.Method, r.URL.Path, r.Host, r.Pattern)
 }
