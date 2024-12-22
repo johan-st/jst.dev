@@ -24,6 +24,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("GET url.jst.dev/", s.handlerShortUrlNew(navItems.at("/url")))
 	mux.HandleFunc("GET url.jst.dev/{shortCode}", s.handlerShortUrl())
 	mux.HandleFunc("GET url.jst.dev/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
+	mux.HandleFunc("GET u.jst.dev/", s.handlerShortUrlNew(navItems.at("/url")))
+	mux.HandleFunc("GET u.jst.dev/{shortCode}", s.handlerShortUrl())
+	mux.HandleFunc("GET u.jst.dev/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
 	mux.HandleFunc("GET /url/", s.handlerShortUrlNew(navItems.at("/url")))
 	mux.HandleFunc("GET /url/{shortCode}", s.handlerShortUrl())
 	mux.HandleFunc("GET /url/i/{shortCode}", s.handlerShortUrlInfo(navItems.at("/url")))
@@ -54,7 +57,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "fly.dev, jst.dev") // Replace "*" with specific origins if needed
+		w.Header().Set("Access-Control-Allow-Origin", "fly.dev, jst.dev")
 		w.Header().Set("Access-Control-Allow-Methods", "GET")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
 		w.Header().Set("Access-Control-Allow-Credentials", "false") // Set to "true" if credentials are required
