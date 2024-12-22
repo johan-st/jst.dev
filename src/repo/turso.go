@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -13,6 +14,8 @@ import (
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 	"golang.org/x/exp/rand"
 )
+
+var seededRand = rand.New(rand.NewSource(uint64(time.Now().UnixNano())))
 
 type TursoRepo struct {
 	db *sql.DB
@@ -250,9 +253,10 @@ type UrlShort struct {
 	Url       string    `db:"url"`
 }
 
+
 // UrlShortenerInsert inserts a new url shortener entry into the database
 // 4 chars will result in 1679616000 unique short codes
-func (t *TursoRepo) UrlShortenerInsert(url string) (UrlShort, error) {
+func (t *TursoRepo) UrlShortenerInsert(url *url.URL) (UrlShort, error) {
 	const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	const shortCodeLength = 4
 	id := ulid.Make()
@@ -263,14 +267,14 @@ func (t *TursoRepo) UrlShortenerInsert(url string) (UrlShort, error) {
 		// Generate a random 4-char short code
 		shortCode := make([]byte, shortCodeLength)
 		for i := 0; i < shortCodeLength; i++ {
-			shortCode[i] = chars[rand.Intn(len(chars))]
+			shortCode[i] = chars[seededRand.Intn(len(chars))]
 		}
 
 		// Try to insert with the generated short code
 		_, err := t.db.Exec(`
 			INSERT INTO url_shortener (id, short_code, url) 
 			VALUES (?, ?, ?)`,
-			id, string(shortCode), url,
+			id, string(shortCode), url.String(),
 		)
 
 		if err != nil {
@@ -282,7 +286,7 @@ func (t *TursoRepo) UrlShortenerInsert(url string) (UrlShort, error) {
 		}
 
 		// Successfully inserted
-		return UrlShort{Id: id, ShortCode: string(shortCode), Url: url}, nil
+		return UrlShort{Id: id, ShortCode: string(shortCode), Url: url.String()}, nil
 	}
 
 	return UrlShort{}, fmt.Errorf("failed to generate unique short code after %d attempts", maxAttempts)
