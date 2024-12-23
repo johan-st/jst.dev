@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"errors"
 	"net/http"
 	"net/url"
@@ -16,7 +17,11 @@ func (s *Server) handlerShortUrl() http.HandlerFunc {
 
 		urlRedirect, err := s.RepoTurso.GetShortUrlRedirect(shortCode)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			if err == sql.ErrNoRows {
+				http.Redirect(w, r, "https://jst.dev/url/", http.StatusSeeOther)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 
