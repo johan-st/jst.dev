@@ -14,6 +14,8 @@ RUN templ generate
     # chmod +x tailwindcss && \
     # ./tailwindcss -i cmd/web/assets/css/input.css -o cmd/web/assets/css/output.css
 
+RUN go test ./... -v
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o main src/main.go
 
 FROM alpine:3.20.1 AS prod
